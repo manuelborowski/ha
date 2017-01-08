@@ -1,0 +1,143 @@
+
+<!doctype html>
+<head>
+<!--<meta name="viewport" content="initial-scale=1, maximum-scale=1">-->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css" />
+<script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
+<script src="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
+</head>
+
+<style>
+h3, h4 {text-align: center;}
+span {font-weight: bold;}
+
+.red-led, .heating-off {
+	margin: 20px;
+	width: 40px;
+	height: 40px;
+	background-color: #940;
+	border-radius: 50%;
+	box-shadow: #000 0 -1px 7px 1px, inset #600 0 -1px 9px, #F00 0 2px 12px;
+}
+.yellow-led {
+	margin: 20px;
+	width: 40px;
+	height: 40px;
+	background-color: #A90;
+	border-radius: 50%;
+	box-shadow: #000 0 -1px 7px 1px, inset #660 0 -1px 9px, #DD0 0 2px 12px;
+}
+.green-led, .heating-on {
+	margin: 20px;
+	width: 40px;
+	height: 40px;
+	background-color: #690;
+	border-radius: 50%;
+	box-shadow: #000 0 -1px 7px 1px, inset #460 0 -1px 9px, #7D0 0 2px 12px;
+}
+</style>
+
+<script>
+	{% for t in thermostats %}
+		// enable or disable the thermostat
+		$(document).on("change", '#{{t.hw_id}}enable', function() 
+		{
+			var v = $('#{{t.hw_id}}enable').val();
+			$.getJSON('/_setstate/{{t.hw_id}}', {state: v});
+		});     
+
+		// thermostat range
+		$(document).on("change", '#{{t.hw_id}}range', function() 
+		{
+			$.getJSON('/_settemperature/{{t.hw_id}}', {val: $('#{{t.hw_id}}range').val()});
+		});     
+
+	{% endfor %}
+
+	//poll the sensors every second
+	$(function sensor()
+	{
+		{% for t in thermostats %}
+			$.getJSON('/_sensor/{{t.hw_id}}', function(data)
+			{
+				//the active indicator...
+				if (data.active == "on") {
+					$("#{{t.hw_id}}indicator").attr("class", "heating-on");
+				} else {
+					$("#{{t.hw_id}}indicator").attr("class", "heating-off");
+				}
+				//the enable button
+				$("#{{t.hw_id}}enable").val(data.enabled).slider('refresh')
+				
+				//the measured temperature
+				$("#{{t.hw_id}}measured").text(data.measured);
+				
+				//the desired temperature
+				$("#{{t.hw_id}}range").val(data.desired);
+				$("#{{t.hw_id}}range").change();
+			});
+		{% endfor %}
+		setTimeout(function(){sensor();}, 500);
+	});
+
+
+	//load a new room
+	function goto_room(url)
+	{
+		window.location.href = url;
+	}
+</script>
+<!-- Simple JQuery Mobile page that display the button state on the breadoard -->
+<!-- You can also change the LED state with the slider switch -->
+<!-- The Raspberry Pi uptime is displayed in the footer (Jinja2 expands the template tag) -->
+<body>
+		<div data-role="page"  data-theme="b">
+
+			<!-- The menu at the left side -->
+			<div data-role="panel" id="menu">
+			  {% for mi in rooms %}
+				<a id="/{{ mi.name }}" class="ui-btn ui-btn-inline ui-corner-all ui-shadow" onclick="return goto_room(this.id)">{{ mi.name }}</a>
+			  {% endfor %}
+			</div>
+			
+			<div data-role="header">
+				<a href="#menu" class="ui-btn ui-icon-bars ui-btn-icon-left">menu</a>
+				<h3>{{ room }}</h3>
+			</div>
+			
+			<div data-role="content">
+				<form>
+					<table>
+					{% for t in thermostats %}
+					<tr>
+						<td>{{t.name}}</td>
+					</tr>
+					<tr>
+						<!-- enable thermostat -->
+						<td><select id="{{t.hw_id}}enable" name="heating" data-role="slider">
+							<option value="off" {{ 'selected' if t.enabled }}>uit</option>
+							<option value="on" {{ 'selected' if t.enabled }}>aan</option>
+						</select></td>
+						<!-- heating indicator -->
+						<td><div id="{{t.hw_id}}indicator" class="heating-off"></div></td>
+						<!-- set temperature -->
+						<td><span id="{{t.hw_id}}measured"></span>°C</td>
+					</tr>
+					<tr>
+						<!-- thermostat sliders -->
+						<td colspan="5">
+						<input  class="elements" name="{{t.name}}" id="{{t.hw_id}}range" min="{{t.min}}" 
+									max="{{t.max}}" value="{{t.desired}}" 
+									type="range" />	</td>
+					</tr>
+					{% endfor %}
+					</table>
+				</form>
+			</div>
+			<div data-role="footer">
+				<div><h4>The ha is {{uptime}}</h4></div>
+			</div>
+		</div>
+
+</body>
