@@ -1,12 +1,19 @@
 from app import app, cache
-
+import logging
 from flask import render_template, request, jsonify
 from app import Pins
+
+log = logging.getLogger(__name__)
+
+def init():
+	log.info("starting")
+
 
 @app.route("/", methods=['GET', 'POST'])
 @app.route("/<string:room>", methods=['GET', 'POST'])
 def Index(room=None):
 	if room == None: room = cache.getRoomList()[0].name
+	log.debug('room : %s' % room)
 	if room == 'instellen' :
 		return render_template("setschedule.html", uptime=GetUptime(), 
 			rooms=cache.getRoomList(), schedule=cache.getHeatingScheduleList())

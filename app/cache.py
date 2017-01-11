@@ -1,8 +1,9 @@
 from app import models, db
-import sys, datetime
+import sys, datetime, logging
 from threading import Timer, Lock
 import time
 
+log = logging.getLogger(__name__)
 
 class Room:
 	def __init__(self, dbRoom):
@@ -52,14 +53,13 @@ _lock = Lock()
 _dirty = False
 
 def _getLock():
-	global _lock
 	_lock.acquire()
 
 def _releaseLock():
-	global _lock
 	_lock.release()
 	
 def init():
+	log.info("starting...")
 	_updateCache()
 	_flushCache()
 
