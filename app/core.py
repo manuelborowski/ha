@@ -1,5 +1,16 @@
-import threading, time
+import threading, time, logging
 from app import cache
+
+
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
+#ch = logging.StreamHandler()
+ch = logging.FileHandler("test.log", 'a')
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+ch.setFormatter(formatter)
+log.addHandler(ch)
+
+log.debug("starting")
 
 
 def init():
@@ -9,8 +20,9 @@ def init():
 	
 	
 def worker():
-	while False:
+	while True:
 		time.sleep(1)
+		log.debug("inside worker")
 		print("i'm the worker")
 		tl = cache.getThermostatList()
 		for t in tl:
