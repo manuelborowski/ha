@@ -65,7 +65,6 @@ def init():
 
 
 def getThermostatList(roomName=None):
-	global _thermostats
 	if roomName == None:
 		return list(_thermostats.values())
 	else:
@@ -78,11 +77,9 @@ def getThermostatList(roomName=None):
 		return l
 
 def getHeatingScheduleList():
-	global _schedule
 	return _schedule
 
 def setHeatingSchedule(day, period, enabled, val):
-	global _schedule
 	global _dirty
 	_getLock()
 	for h in _schedule:
@@ -106,7 +103,6 @@ def getRoomList():
 
 def setThermostatEnabled(hw_id=None, enabled=False):
 	_getLock()
-	global _thermostats
 	global _dirty
 	_thermostats[hw_id].enabled = enabled
 	_thermostats[hw_id].dirty = True
@@ -115,7 +111,6 @@ def setThermostatEnabled(hw_id=None, enabled=False):
 
 def setThermostatValue(hw_id=None, desired=0):
 	_getLock()
-	global _thermostats
 	global _dirty
 	_thermostats[hw_id].desired = int(desired)
 	_thermostats[hw_id].dirty = True
@@ -128,9 +123,6 @@ def getThermostatParameters(hw_id=None):
 		
 def _updateCache():
 	_getLock()
-	global _thermostats
-	global _rooms
-	global _schedule
 	tl = models.Thermostat.query.all()
 	for t in tl:
 		_thermostats[t.hw_id] = Thermostat(t)
@@ -145,8 +137,6 @@ def _updateCache():
 	_releaseLock()
 
 def _flushCache():
-	global _thermostats
-	global _schedule
 	global _dirty
 	if _dirty:
 		_getLock()
@@ -170,6 +160,5 @@ def _flushCache():
 	#If no dirty objects then the database is not accessed.
 	t = Timer(600, _flushCache)
 	t.start()
-
-	print('done committing to database')
+	log.info('done committing to database')
 

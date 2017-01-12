@@ -9,23 +9,23 @@ def init():
 	log.info("starting")
 	coreThread = threading.Thread(target=worker)
 	coreThread.start()
-	log.info(owt.addThermometer('28-03168553fbff', 'th_yannick'))
-	log.info(owt.addThermometer('28-0516866ca3ff', 'th_renee'))
+	tl = cache.getThermostatList()
+	for t in tl:
+		typeId = t.hw_id.split(":")
+		if typeId[0] =='w1':	#one wire thermometer
+			log.info(owt.addThermometer(typeId[1]))
 
 	
 		
 def worker():
 	while True:
 		time.sleep(1)
-		log.debug("tick...")
+		#log.debug("tick...")
 		tl = cache.getThermostatList()
 		for t in tl:
-			if t.hw_id=='th_yannick':
-				t.measured = owt.getValue('th_yannick')
-				#with open(t.hw_id) as f:t.measured=int(f.read())
-			elif t.hw_id =='th_renee' :
-				t.measured = owt.getValue('th_renee')
-				
+			typeId = t.hw_id.split(":")
+			if typeId[0] =='w1':	#one wire thermometer
+				t.measured = owt.getValue(typeId[1])
 			else:
 				t.measured=15
 			if t.enabled: 
