@@ -71,7 +71,7 @@ span {font-weight: bold;}
 				$("#{{t.hw_id}}enable").val(data.enabled).slider('refresh')
 				
 				//the measured temperature
-				$("#{{t.hw_id}}measured").text(data.measured);
+				$("#{{t.hw_id}}measured").text(data.measured.toFixed(1));
 				
 				//the desired temperature
 				$("#{{t.hw_id}}range").val(data.desired);

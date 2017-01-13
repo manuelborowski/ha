@@ -118,10 +118,10 @@ def setThermostatValue(hw_id=None, desired=0):
 	_releaseLock()
 		
 def getThermostatParameters(hw_id=None):
-	global _thermostats
 	return (_thermostats[hw_id].desired, _thermostats[hw_id].measured, _thermostats[hw_id].active, _thermostats[hw_id].enabled)
 		
 def _updateCache():
+	global _schedule
 	_getLock()
 	tl = models.Thermostat.query.all()
 	for t in tl:
@@ -134,6 +134,9 @@ def _updateCache():
 	_schedule = []
 	for h, i in zip(hl[0::2], hl[1::2]):
 		_schedule.append(HeatingSchedule(h, i))
+	log.debug("thermostats " + str(_thermostats))
+	log.debug("rooms " + str(_rooms))
+	log.debug("schedule " + str(_schedule))
 	_releaseLock()
 
 def _flushCache():

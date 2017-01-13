@@ -11,7 +11,7 @@ def init():
 	coreThread.start()
 	tl = cache.getThermostatList()
 	for t in tl:
-		typeId = t.hw_id.split(":")
+		typeId = t.hw_id.split("_")
 		if typeId[0] =='w1':	#one wire thermometer
 			log.info(owt.addThermometer(typeId[1]))
 
@@ -23,7 +23,7 @@ def worker():
 		#log.debug("tick...")
 		tl = cache.getThermostatList()
 		for t in tl:
-			typeId = t.hw_id.split(":")
+			typeId = t.hw_id.split("_")
 			if typeId[0] =='w1':	#one wire thermometer
 				t.measured = owt.getValue(typeId[1])
 			else:

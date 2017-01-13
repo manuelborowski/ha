@@ -1,6 +1,6 @@
 from app import app, cache
 import logging
-from flask import render_template, request, jsonify
+from flask import render_template, request, jsonify, url_for
 from app import Pins
 
 log = logging.getLogger(__name__)
@@ -8,6 +8,10 @@ log = logging.getLogger(__name__)
 def init():
 	log.info("starting")
 
+@app.route("/favicon.ico")
+def favicon():
+	print('get icon')
+	return(url_for('static',filename='favicon.ico'))
 
 @app.route("/", methods=['GET', 'POST'])
 @app.route("/<string:room>", methods=['GET', 'POST'])
@@ -37,6 +41,7 @@ def _button():
 @app.route("/_sensor/<string:thermostat>")    
 def _readSensor(thermostat):
 	desired, measured, active, enabled = cache.getThermostatParameters(thermostat)
+	print("d/m/a/e %d/%d/%d/%d" % (desired, measured, active, enabled))
 	return jsonify(active='on' if active else 'off', enabled='on' if enabled else 'off', measured=measured, desired=desired)
 	
 
@@ -54,8 +59,6 @@ def _setState(thermostat):
 @app.route("/_settemperature/<string:thermostat>")
 def _setTemperature(thermostat):
     desired = request.args.get('val')
-#    print("test {}".format(val))
-#    open("1", "w").write(val)
     cache.setThermostatValue(thermostat, desired)
     return ""
 	

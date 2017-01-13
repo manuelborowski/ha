@@ -2,6 +2,7 @@
 
 from os import path
 import threading, time, datetime
+from threading import Lock
 import logging
 
 log = logging.getLogger(__name__)
@@ -14,8 +15,16 @@ log = logging.getLogger(__name__)
 
 
 _thermometers = {}
+_lock = Lock()
 
-def init():
+def _getLock():
+	_lock.acquire()
+
+def _releaseLock():
+	_lock.release()
+	
+
+def start():
 	log.info("starting...")
 	_thermoThread = threading.Thread(target=_worker)
 	_thermoThread.start()
@@ -24,7 +33,7 @@ def _worker():
 	while True:
 		for k in _thermometers.keys():
 			_thermometers[k] = _getValue(k)
-		time.sleep(2)
+		#time.sleep(2)
 		
 
 def _getSysDevice(serial):
@@ -32,9 +41,7 @@ def _getSysDevice(serial):
 	
 def _getValue(serial):
 	try:
-		#print("start get thermo " + str(datetime.datetime.now()))
 		with open(_getSysDevice(serial), 'r') as f: data = f.read()
-		#print("stop get thermo " + str(datetime.datetime.now()))
 		return int(data.split('t=')[1])/1000
 	except Exception as e:
 		print(e)
@@ -45,7 +52,7 @@ def getValue(serial):
 	try:
 		return _thermometers[serial]
 	except Exception as e:
-		print(e)
+		print("getValue " + str(e))
 		return 0
 	
 def addThermometer(serial):

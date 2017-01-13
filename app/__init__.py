@@ -11,8 +11,9 @@ from app import views, models, cache, core, onewirethermo
 views.init()
 Pins.Init()
 cache.init()
-onewirethermo.init()
 core.init()
+
+onewirethermo.start()
 
 
 	
