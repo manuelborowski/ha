@@ -9,7 +9,7 @@ log = logging.getLogger(__name__)
 
 '''
 	Store the themometers in a dictionary.
-	Poll the thermoters on a regular interval and store in a cache
+	Pol the thermoters on a regular interval and store in a cache
 	Users read the cache, not from the actual thermometer
 '''
 
@@ -52,7 +52,7 @@ def getValue(serial):
 	try:
 		return _thermometers[serial]
 	except Exception as e:
-		print("getValue " + str(e))
+		#print("getValue " + str(e))
 		return 0
 	
 def addThermometer(serial):

@@ -6,14 +6,16 @@ app.config.from_object('config')
 db = SQLAlchemy(app)
 
 from app import Pins
-from app import views, models, cache, core, onewirethermo
+from app import views, models, cache, core, onewirethermo, zwave
 
 views.init()
 Pins.Init()
 cache.init()
 core.init()
+zwave.init()
 
 onewirethermo.start()
+zwave.start()
 
 
 	

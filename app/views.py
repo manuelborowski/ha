@@ -1,6 +1,6 @@
 from app import app, cache
-import logging
-from flask import render_template, request, jsonify, url_for
+import logging, os
+from flask import render_template, request, jsonify, url_for, send_from_directory
 from app import Pins
 
 log = logging.getLogger(__name__)
@@ -8,11 +8,14 @@ log = logging.getLogger(__name__)
 def init():
 	log.info("starting")
 
+
 @app.route("/favicon.ico")
 def favicon():
-	print('get icon')
+	#print('get icon from : ' + os.path.join(app.root_path, 'static'))
 	return(url_for('static',filename='favicon.ico'))
-
+	#return send_from_directory(os.path.join(app.root_path, 'static'),
+    #                           'favicon.ico', mimetype='image/vnd.microsoft.icon')
+    
 @app.route("/", methods=['GET', 'POST'])
 @app.route("/<string:room>", methods=['GET', 'POST'])
 def Index(room=None):
@@ -41,7 +44,7 @@ def _button():
 @app.route("/_sensor/<string:thermostat>")    
 def _readSensor(thermostat):
 	desired, measured, active, enabled = cache.getThermostatParameters(thermostat)
-	print("d/m/a/e %d/%d/%d/%d" % (desired, measured, active, enabled))
+	#print("d/m/a/e %d/%d/%d/%d" % (desired, measured, active, enabled))
 	return jsonify(active='on' if active else 'off', enabled='on' if enabled else 'off', measured=measured, desired=desired)
 	
 
