@@ -6,8 +6,11 @@ SQLALCHEMY_MIGRATE_REPO = os.path.join(basedir, 'db_repository')
 SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 ZWAVE_DEVICE="/dev/ttyS0"
+OPENZWAVE_CONFIG_FILE="ozwconfig"
 OPENZWAVE_LOG_LEVEL="Debug"
 OPENZWAVE_LOG_FILE="OZW_Log.log"
+
+INVALID_TEMP=-100
 
 
 _ch = logging.FileHandler("automation.log", 'a')
