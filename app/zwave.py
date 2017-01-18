@@ -43,10 +43,17 @@ class NodeFunction:
 	def __init__(self):
 		self.node = 0
 		self.function = 0
-		self.value = config.INVALID_TEMP
+		self.ready = False
 
 _thermometers = {}
 
+_lock = Lock()
+
+def _getLock():
+	_lock.acquire()
+
+def _releaseLock():
+	_lock.release()
 
 def init():
 	log.info("initializing...")
@@ -138,36 +145,58 @@ def start():
 
 	print("Temp : Node/sensor : {}/{}".format(t_node, t_sensor))      
 	print("Lum : Node/sensor : {}/{}".format(t_node, l_sensor))      
+	
+	#network is ready, check if Thermometers are added...
+	if _thermometers:
+		_getLock()
+		for t in _thermometers:
+			_findNodefunction(t)
+		_releaseLock()
 
-	for i in range(0,300):
-		time.sleep(1.0)
-		print("Temperatuur is {} {}".format(_network.nodes[t_node].get_sensor_value(t_sensor), _network.nodes[t_node].values[t_sensor].units))
-		print("Luminancie is {} {}".format(_network.nodes[t_node].get_sensor_value(l_sensor), _network.nodes[t_node].values[l_sensor].units))
+	#for i in range(0,300):
+		#time.sleep(1.0)
+		#print("Temperatuur is {} {}".format(_network.nodes[t_node].get_sensor_value(t_sensor), _network.nodes[t_node].values[t_sensor].units))
+		#print("Luminancie is {} {}".format(_network.nodes[t_node].get_sensor_value(l_sensor), _network.nodes[t_node].values[l_sensor].units))
 		  
 
-	print("------------------------------------------------------------")
-	print("Stop network")
-	print("------------------------------------------------------------")
-	_network.stop()
-	print("Memory use : {} Mo".format( (resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024.0)))
+	#print("------------------------------------------------------------")
+	#print("Stop network")
+	#print("------------------------------------------------------------")
+	#_network.stop()
+	#print("Memory use : {} Mo".format( (resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024.0)))
 
 
 def _findNodefunction(name):
+	global _thermometers
+	log.info("Find a node/function for : %s", name)
 	if not _network.is_ready:
 		log.error("network is not ready, cannot add %s", name)
 		return
 	for n in _network.nodes:
 		for f in _network.nodes[n].get_sensors():
-			if _network.nodes[n].name==name and _network.nodes[n].values[f].label=="Temperature":
+			if _network.nodes[n].name == name and _network.nodes[n].values[f].label == "Temperature":
 				_thermometers[name].node = n
 				_thermometers[name].function = f
-				_thermometers[name].value = _network.nodes[n].get_sensor_value(f)
+				_thermometers[name].ready = True
 				return
 	log.error("cannot find node with name %s", name)
 	
 
 def addThermometer(name):
+	global _thermometers
+	log.info("Adding thermometer : %s ", name)
+	_getLock()
 	_thermometers[name] = NodeFunction()
 	if _network.is_ready:
 		self._findNodeFunction(name)
+	_releaseLock()
 	
+def getValue(name):
+	try:
+		if _thermometers[name].ready:
+			return _network.nodes[_thermometers[name].node].get_sensor_value(_thermometers[name].function)
+		else:
+			return config.INVALID_TEMP
+	except Exception as e:
+		log.error("getValue : " + str(e))
+		return 0
