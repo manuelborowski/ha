@@ -1,11 +1,12 @@
 import threading, time, logging
 from app import cache
 from app import onewirethermo as owt
+from app import zwave
 
 
 log = logging.getLogger(__name__)
 
-def init():
+def start():
 	log.info("starting")
 	coreThread = threading.Thread(target=worker)
 	coreThread.start()
@@ -14,6 +15,8 @@ def init():
 		typeId = t.hw_id.split("_")
 		if typeId[0] =='w1':	#one wire thermometer
 			log.info(owt.addThermometer(typeId[1]))
+		elif typeId[0] =='zw':	#zwave thermometer
+			log.info(zwave.addThermometer(typeId[1]))
 
 	
 		
@@ -26,6 +29,8 @@ def worker():
 			typeId = t.hw_id.split("_")
 			if typeId[0] =='w1':	#one wire thermometer
 				t.measured = owt.getValue(typeId[1])
+			elif typeId[0] == 'zw': #zwave thermometer
+				t.measured = zwave.getValue(typeId[1])
 			else:
 				t.measured=15
 			if t.enabled: 

@@ -26,7 +26,7 @@ along with python-openzwave. If not, see http://www.gnu.org/licenses.
 import logging
 import sys, os
 import resource
-import time
+import time, threading
 from threading import Lock
 
 log = logging.getLogger(__name__)
@@ -47,7 +47,6 @@ class NodeFunction:
 		self.ready = False
 
 _thermometers = {}
-
 _lock = Lock()
 
 def _getLock():
@@ -58,7 +57,7 @@ def _releaseLock():
 
 def init():
 	log.info("initializing...")
-	global options
+	global _network
 	#Define some manager options
 	options = ZWaveOption(config.ZWAVE_DEVICE, config_path=config.OPENZWAVE_CONFIG_FILE, user_path=".", cmd_line="")
 	options.set_log_file(config.OPENZWAVE_LOG_FILE)
@@ -68,22 +67,28 @@ def init():
 	#options.set_save_log_level('Info')
 	options.set_logging(False)
 	options.lock()
+	#Create a network object
+	_network = ZWaveNetwork(options)
 
 def start():
 	global _network
 	log.info("starting...")
+	_thermoThread = threading.Thread(target=_worker)
+	_thermoThread.start()
 
+
+def _worker():
+	global _network
+	log.info("start worker...")
+	#time.sleep(2)
 	#print("Memory use : {} Mo".format( (resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024.0)))
-
-	#Create a network object
-	_network = ZWaveNetwork(options)
 
 	time_started = 0
 	#log.info("Waiting for network awaked")
 	for i in range(0,30):
 		log.info("Waiting for network awaked (%d seconds)", i*10)
 		for t in range(0, 9):
-			if _network.state>=network.STATE_AWAKED:
+			if _network.state >= _network.STATE_AWAKED:
 				log.info("Network is awaked.")
 				#print("Memory use : {} Mo".format( (resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024.0)))
 				break
@@ -92,9 +97,9 @@ def start():
 				#sys.stdout.flush()
 				#time_started += 1
 				time.sleep(1.0)
-		if _network.state>=network.STATE_AWAKED:
+		if _network.state >= _network.STATE_AWAKED:
 				break
-	if _network.state<network.STATE_AWAKED:
+	if _network.state < _network.STATE_AWAKED:
 		#print(".")
 		log.info("Network is not awake but continue anyway")
 	#print("------------------------------------------------------------")
@@ -111,7 +116,7 @@ def start():
 	for i in range(0,30):
 		log.info("Waiting for network ready (%d seconds)", i*10)
 		for t in range(0, 9):
-			if _network.state>=network.STATE_READY:
+			if _network.state >= _network.STATE_READY:
 				#print(" done in {} seconds".format(time_started))
 				log.info("Network is ready")
 				break
@@ -125,7 +130,7 @@ def start():
 				#sys.stdout.write(".")
 				#sys.stdout.flush()
 				time.sleep(1.0)
-		if _network.state>=network.STATE_READY:
+		if _network.state >= _network.STATE_READY:
 			break
 
 
@@ -151,7 +156,7 @@ def start():
 	if _thermometers:
 		_getLock()
 		for t in _thermometers:
-			_findNodefunction(t)
+			_findNodeFunction(t)
 		_releaseLock()
 
 	#for i in range(0,300):
@@ -167,7 +172,7 @@ def start():
 	#print("Memory use : {} Mo".format( (resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024.0)))
 
 
-def _findNodefunction(name):
+def _findNodeFunction(name):
 	global _thermometers
 	log.info("Find a node/function for : %s", name)
 	if not _network.is_ready:
@@ -189,7 +194,7 @@ def addThermometer(name):
 	_getLock()
 	_thermometers[name] = NodeFunction()
 	if _network.is_ready:
-		self._findNodeFunction(name)
+		_findNodeFunction(name)
 	_releaseLock()
 	
 def getValue(name):

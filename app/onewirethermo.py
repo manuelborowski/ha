@@ -16,6 +16,7 @@ log = logging.getLogger(__name__)
 
 
 _thermometers = {}
+_addThermometers = {}
 _lock = Lock()
 
 def _getLock():
@@ -31,10 +32,19 @@ def start():
 	_thermoThread.start()
 
 def _worker():
+	global _addThermometers
+	global _thermometers
+	log.info("start worker...")
 	while True:
 		for k in _thermometers.keys():
 			_thermometers[k] = _getValue(k)
+		if _addThermometers:
+			_getLock()
+			_thermometers.update(_addThermometers)
+			_addThermometers = {}
+			_releaseLock()
 		#time.sleep(2)
+	
 		
 
 def _getSysDevice(serial):
@@ -57,9 +67,12 @@ def getValue(serial):
 		return config.INVALID_TEMP
 	
 def addThermometer(serial):
+	global _addThermometers
 	if path.isfile(_getSysDevice(serial)):
 		log.info("adding onewire thermometer %s", serial)
-		_thermometers[serial] = _getValue(serial)
+		_getLock()
+		_addThermometers[serial] = _getValue(serial)
+		_releaseLock()
 		return "ok"
 	else:
 		return serial + " : device not found"

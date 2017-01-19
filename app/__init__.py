@@ -11,11 +11,11 @@ from app import views, models, cache, core, onewirethermo, zwave
 cache.init()
 views.init()
 Pins.Init()
-core.init()
-#zwave.init()
+zwave.init()
 
 onewirethermo.start()
-#zwave.start()
+zwave.start()
+core.start()
 
 
 	
