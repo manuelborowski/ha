@@ -32,7 +32,7 @@ def Index(menuItem=None):
 	log.debug('menuItem : %s' % menuItem)
 	if menuItem == 'overzicht' :
 		return render_template("tempoverview.html", uptime=GetUptime(), 
-			menuItems=_menuItems, schedule=cache.getHeatingScheduleList())
+			menuItems=_menuItems, thermostats=cache.getThermostatList())
 	elif menuItem == 'instellen' :
 		return render_template("setschedule.html", uptime=GetUptime(), 
 			menuItems=_menuItems, schedule=cache.getHeatingScheduleList())

@@ -111,25 +111,12 @@ span {font-weight: bold;}
 					<table>
 					{% for t in thermostats %}
 					<tr>
+						<!-- name thermostat -->
 						<td>{{t.name}}</td>
-					</tr>
-					<tr>
-						<!-- enable thermostat -->
-						<td><select id="{{t.hw_id}}enable" name="heating" data-role="slider">
-							<option value="off" {{ 'selected' if t.enabled }}>uit</option>
-							<option value="on" {{ 'selected' if t.enabled }}>aan</option>
-						</select></td>
 						<!-- heating indicator -->
 						<td><div id="{{t.hw_id}}indicator" class="heating-off"></div></td>
-						<!-- set temperature -->
+						<!-- measured temperature -->
 						<td><span id="{{t.hw_id}}measured"></span>°C</td>
-					</tr>
-					<tr>
-						<!-- thermostat sliders -->
-						<td colspan="5">
-						<input  class="elements" name="{{t.name}}" id="{{t.hw_id}}range" min="{{t.min}}" 
-									max="{{t.max}}" value="{{t.desired}}" 
-									type="range" />	</td>
 					</tr>
 					{% endfor %}
 					</table>
