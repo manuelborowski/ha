@@ -75,7 +75,7 @@ span {font-weight: bold;}
 
 			<!-- The menu at the left side -->
 			<div data-role="panel" id="menu">
-			  {% for mi in rooms %}
+			  {% for mi in menuItems %}
 				<a id="/{{ mi.name }}" class="ui-btn ui-btn-inline ui-corner-all ui-shadow" onclick="return goto_room(this.id)">{{ mi.name }}</a>
 			  {% endfor %}
 			</div>

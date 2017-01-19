@@ -8,14 +8,14 @@ db = SQLAlchemy(app)
 from app import Pins
 from app import views, models, cache, core, onewirethermo, zwave
 
+cache.init()
 views.init()
 Pins.Init()
-cache.init()
 core.init()
-zwave.init()
+#zwave.init()
 
 onewirethermo.start()
-zwave.start()
+#zwave.start()
 
 
 	

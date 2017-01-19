@@ -5,9 +5,18 @@ from app import Pins
 
 log = logging.getLogger(__name__)
 
-def init():
-	log.info("starting")
+_menuItems = []
 
+class MenuItem:
+	def __init__(self, name):
+		self.name = name
+
+def init():
+	global _menuItems
+	log.info("starting")
+	_menuItems=cache.getRoomList()
+	_menuItems.append(MenuItem('instellen'))
+	_menuItems.append(MenuItem('overzicht'))
 
 @app.route("/favicon.ico")
 def favicon():
@@ -17,16 +26,19 @@ def favicon():
     #                           'favicon.ico', mimetype='image/vnd.microsoft.icon')
     
 @app.route("/", methods=['GET', 'POST'])
-@app.route("/<string:room>", methods=['GET', 'POST'])
-def Index(room=None):
-	if room == None: room = cache.getRoomList()[0].name
-	log.debug('room : %s' % room)
-	if room == 'instellen' :
+@app.route("/<string:menuItem>", methods=['GET', 'POST'])
+def Index(menuItem=None):
+	if menuItem == None: menuItem = cache.getRoomList()[0].name
+	log.debug('menuItem : %s' % menuItem)
+	if menuItem == 'overzicht' :
+		return render_template("tempoverview.html", uptime=GetUptime(), 
+			menuItems=_menuItems, schedule=cache.getHeatingScheduleList())
+	elif menuItem == 'instellen' :
 		return render_template("setschedule.html", uptime=GetUptime(), 
-			rooms=cache.getRoomList(), schedule=cache.getHeatingScheduleList())
+			menuItems=_menuItems, schedule=cache.getHeatingScheduleList())
 	else:
-		return render_template("base.html", uptime=GetUptime(), room=room, 
-			rooms=cache.getRoomList(), thermostats=cache.getThermostatList(room))
+		return render_template("base.html", uptime=GetUptime(), room=menuItem, 
+			menuItems=_menuItems, thermostats=cache.getThermostatList(menuItem))
 
 # ajax GET call this function to set led state
 # depeding on the GET parameter sent

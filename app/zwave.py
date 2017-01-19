@@ -26,6 +26,8 @@ along with python-openzwave. If not, see http://www.gnu.org/licenses.
 import logging
 import sys, os
 import resource
+import time
+from threading import Lock
 
 log = logging.getLogger(__name__)
 
@@ -36,7 +38,6 @@ from openzwave.scene import ZWaveScene
 from openzwave.controller import ZWaveController
 from openzwave.network import ZWaveNetwork
 from openzwave.option import ZWaveOption
-import time
 import config
 
 class NodeFunction:
@@ -199,4 +200,4 @@ def getValue(name):
 			return config.INVALID_TEMP
 	except Exception as e:
 		log.error("getValue : " + str(e))
-		return 0
+		return config.INVALID_TEMP

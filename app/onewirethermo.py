@@ -4,6 +4,7 @@ from os import path
 import threading, time, datetime
 from threading import Lock
 import logging
+import config
 
 log = logging.getLogger(__name__)
 
@@ -53,7 +54,7 @@ def getValue(serial):
 		return _thermometers[serial]
 	except Exception as e:
 		#print("getValue " + str(e))
-		return 0
+		return config.INVALID_TEMP
 	
 def addThermometer(serial):
 	if path.isfile(_getSysDevice(serial)):
