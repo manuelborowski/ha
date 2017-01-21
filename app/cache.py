@@ -66,7 +66,7 @@ def init():
 
 def getThermostatList(roomName=None):
 	if roomName == None:
-		return list(_thermostats.values())
+		return sorted(list(_thermostats.values()), key=lambda thermostat: thermostat.hw_id)
 	else:
 		_getLock()
 		l = []
@@ -99,7 +99,7 @@ def setHeatingSchedule(day, period, enabled, val):
 	_releaseLock()
 
 def getRoomList():
-	return list(_rooms.values())
+	return sorted(list(_rooms.values()), key=lambda room: room.name)
 
 def setThermostatEnabled(hw_id=None, enabled=False):
 	_getLock()

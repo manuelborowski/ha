@@ -13,7 +13,7 @@ OPENZWAVE_LOG_LEVEL="Debug"
 OPENZWAVE_LOG_FILE="OZW_Log.log"
 
 HISTORY_DIR = os.path.join(BASE_DIR, "history")
-HISTORY_INTERVAL = 60 * 10	#seconds
+HISTORY_INTERVAL = 5	#seconds
 
 
 _ch = logging.FileHandler("automation.log", 'a')
@@ -27,8 +27,8 @@ LOGGERS['app.onewirethermo'] = logging.DEBUG
 LOGGERS['app.cache'] = logging.DEBUG
 LOGGERS['app.views'] = logging.DEBUG
 LOGGERS['app.zwave'] = logging.DEBUG
+LOGGERS['app.history'] = logging.DEBUG	
 LOGGERS['werkzeug'] = logging.ERROR	
-LOGGERS['history'] = logging.DEBUG	
 
 for logger, level in LOGGERS.items():
 	logging.getLogger(logger).addHandler(_ch)

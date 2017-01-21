@@ -28,9 +28,11 @@ def worker():
 		for t in tl:
 			typeId = t.hw_id.split("_")
 			if typeId[0] =='w1':	#one wire thermometer
-				t.measured = owt.getValue(typeId[1])
+				t.measured = round(owt.getValue(typeId[1]), 1)
 			elif typeId[0] == 'zw': #zwave thermometer
-				t.measured = zwave.getValue(typeId[1])
+				t.measured = round(zwave.getValue(typeId[1]), 1)
+			elif typeId[0] == 'dummy': #dummy value
+				t.measured = round(float(typeId[1]), 1)
 			else:
 				t.measured=15
 			if t.enabled: 
