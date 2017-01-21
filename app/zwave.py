@@ -149,8 +149,8 @@ def _worker():
 				t_node = node
 				l_sensor = val
 
-	print("Temp : Node/sensor : {}/{}".format(t_node, t_sensor))      
-	print("Lum : Node/sensor : {}/{}".format(t_node, l_sensor))      
+	#print("Temp : Node/sensor : {}/{}".format(t_node, t_sensor))      
+	#print("Lum : Node/sensor : {}/{}".format(t_node, l_sensor))      
 	
 	#network is ready, check if Thermometers are added...
 	if _thermometers:

@@ -1,8 +1,10 @@
 import os, logging
-basedir = os.path.abspath(os.path.dirname(__file__))
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
-SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'app.db')
-SQLALCHEMY_MIGRATE_REPO = os.path.join(basedir, 'db_repository')
+INVALID_TEMP=-100
+
+SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(BASE_DIR, 'app.db')
+SQLALCHEMY_MIGRATE_REPO = os.path.join(BASE_DIR, 'db_repository')
 SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 ZWAVE_DEVICE="/dev/ttyS0"
@@ -10,7 +12,8 @@ OPENZWAVE_CONFIG_FILE="ozwconfig"
 OPENZWAVE_LOG_LEVEL="Debug"
 OPENZWAVE_LOG_FILE="OZW_Log.log"
 
-INVALID_TEMP=-100
+HISTORY_DIR = os.path.join(BASE_DIR, "history")
+HISTORY_INTERVAL = 60 * 10	#seconds
 
 
 _ch = logging.FileHandler("automation.log", 'a')
@@ -25,6 +28,7 @@ LOGGERS['app.cache'] = logging.DEBUG
 LOGGERS['app.views'] = logging.DEBUG
 LOGGERS['app.zwave'] = logging.DEBUG
 LOGGERS['werkzeug'] = logging.ERROR	
+LOGGERS['history'] = logging.DEBUG	
 
 for logger, level in LOGGERS.items():
 	logging.getLogger(logger).addHandler(_ch)
