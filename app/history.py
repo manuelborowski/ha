@@ -39,7 +39,7 @@ def worker():
 		time.sleep(config.HISTORY_INTERVAL)
 		#get current date/time, extract year and month and check if correspondig file exists
 		now = datetime.datetime.now()
-		hfn = os.path.join(config.HISTORY_DIR, "{}-{}-{}-{}.his".format(now.year, now.month, now.day, now.hour))
+		hfn = os.path.join(config.HISTORY_DIR, "{}-{}.his".format(now.year, now.month))
 		hf = _getFileHandler(hfn)
 		tl = cache.getThermostatList()
 		line = '{}-{}:{};'.format(now.day, now.hour, now.minute)

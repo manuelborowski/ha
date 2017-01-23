@@ -13,7 +13,7 @@ OPENZWAVE_LOG_LEVEL="Debug"
 OPENZWAVE_LOG_FILE="OZW_Log.log"
 
 HISTORY_DIR = os.path.join(BASE_DIR, "history")
-HISTORY_INTERVAL = 5	#seconds
+HISTORY_INTERVAL = 10 * 60	#seconds
 
 
 _ch = logging.FileHandler("automation.log", 'a')
