@@ -36,6 +36,7 @@ class Thermostat(db.Model):
 	max = db.Column(db.Integer)
 	desired = db.Column(db.Integer)
 	hw_id = db.Column(db.String(40))
+	follow_schedule = db.Column(db.Boolean)
 	room_id = db.Column(db.Integer, db.ForeignKey('room.id'))
 
 	def __repr__(self):
