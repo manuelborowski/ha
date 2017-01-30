@@ -27,6 +27,7 @@ class Thermostat:
 		self.dirty = False
 		self.active = False
 		self.measured = self.desired
+		self.follow_schedule = dbThermostat.follow_schedule
 
 	def __repr__(self):
 		return '<name[%r]/e[%r]/s[%r]/d[%r]/a[%r]/m[%r]>' % \
@@ -134,9 +135,9 @@ def _updateCache():
 	_schedule = []
 	for h, i in zip(hl[0::2], hl[1::2]):
 		_schedule.append(HeatingSchedule(h, i))
-	log.debug("thermostats " + str(_thermostats))
-	log.debug("rooms " + str(_rooms))
-	log.debug("schedule " + str(_schedule))
+	#log.debug("thermostats " + str(_thermostats))
+	#log.debug("rooms " + str(_rooms))
+	#log.debug("schedule " + str(_schedule))
 	_releaseLock()
 
 def _flushCache():

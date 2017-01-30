@@ -31,6 +31,7 @@ def worker():
 				t.measured = round(owt.getValue(typeId[1]), 1)
 			elif typeId[0] == 'zw': #zwave thermometer
 				t.measured = round(zwave.getValue(typeId[1]), 1)
+				log.info("sensor {} : battery level {} %".format(typeId[1], zwave.getBatteryLevel(typeId[1])))
 			elif typeId[0] == 'dummy': #dummy value
 				t.measured = round(float(typeId[1]), 1)
 			else:

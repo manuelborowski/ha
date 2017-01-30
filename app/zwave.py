@@ -43,7 +43,8 @@ import config
 class NodeFunction:
 	def __init__(self):
 		self.node = 0
-		self.function = 0
+		self.tempVal = 0
+		self.batVal = 0
 		self.ready = False
 
 _thermometers = {}
@@ -65,7 +66,7 @@ def init():
 	options.set_console_output(False)
 	options.set_save_log_level(config.OPENZWAVE_LOG_LEVEL)
 	#options.set_save_log_level('Info')
-	options.set_logging(False)
+	options.set_logging(True)
 	options.lock()
 	#Create a network object
 	_network = ZWaveNetwork(options)
@@ -80,110 +81,52 @@ def start():
 def _worker():
 	global _network
 	log.info("start worker...")
-	#time.sleep(2)
-	#print("Memory use : {} Mo".format( (resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024.0)))
 
 	time_started = 0
-	#log.info("Waiting for network awaked")
-	for i in range(0,30):
+	for i in range(0,3):
 		log.info("Waiting for network awaked (%d seconds)", i*10)
 		for t in range(0, 9):
 			if _network.state >= _network.STATE_AWAKED:
 				log.info("Network is awaked.")
-				#print("Memory use : {} Mo".format( (resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024.0)))
 				break
 			else:
-				#sys.stdout.write(".")
-				#sys.stdout.flush()
-				#time_started += 1
 				time.sleep(1.0)
 		if _network.state >= _network.STATE_AWAKED:
 				break
 	if _network.state < _network.STATE_AWAKED:
-		#print(".")
 		log.info("Network is not awake but continue anyway")
-	#print("------------------------------------------------------------")
-	#print("Use openzwave library : {}".format(network.controller.ozw_library_version))
-	#print("Use python library : {}".format(network.controller.python_library_version))
-	#print("Use ZWave library : {}".format(network.controller.library_description))
-	#print("Network home id : {}".format(network.home_id_str))
-	#print("Controller node id : {}".format(network.controller.node.node_id))
-	#print("Controller node version : {}".format(network.controller.node.version))
-	#print("Nodes in network : {}".format(network.nodes_count))
-	#print("------------------------------------------------------------")
-	#log.info("Waiting for network ready")
-	#print("------------------------------------------------------------")
-	for i in range(0,30):
-		log.info("Waiting for network ready (%d seconds)", i*10)
-		for t in range(0, 9):
-			if _network.state >= _network.STATE_READY:
-				#print(" done in {} seconds".format(time_started))
-				log.info("Network is ready")
-				break
-			else:
-				#sys.stdout.write(".")
-				#time_started += 1
-				#sys.stdout.write(network.state_str)
-				#sys.stdout.write("(")
-				#sys.stdout.write(str(network.nodes_count))
-				#sys.stdout.write(")")
-				#sys.stdout.write(".")
-				#sys.stdout.flush()
-				time.sleep(1.0)
-		if _network.state >= _network.STATE_READY:
-			break
+	#for i in range(0,3):
+		#log.info("Waiting for network ready (%d seconds)", i*10)
+		#for t in range(0, 9):
+			#if _network.state >= _network.STATE_READY:
+				#log.info("Network is ready")
+				#break
+			#else:
+				#time.sleep(1.0)
+		#if _network.state >= _network.STATE_READY:
+			#break
 
-
-	#print("Memory use : {} Mo".format( (resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024.0)))
-	if not _network.is_ready:
-	#	print(".")
-		log.info("Network is not ready but continue anyway")
-
-	for node in _network.nodes:
-		for val in _network.nodes[node].get_sensors() :
-			if _network.nodes[node].name == "yannick" and _network.nodes[node].values[val].label == "Temperature":
-				t_node = node
-				t_sensor = val
-				break
-			if _network.nodes[node].name == "yannick" and _network.nodes[node].values[val].label == "Luminance":
-				t_node = node
-				l_sensor = val
-
-	#print("Temp : Node/sensor : {}/{}".format(t_node, t_sensor))      
-	#print("Lum : Node/sensor : {}/{}".format(t_node, l_sensor))      
-	
-	#network is ready, check if Thermometers are added...
-	if _thermometers:
-		_getLock()
-		for t in _thermometers:
-			_findNodeFunction(t)
-		_releaseLock()
-
-	#for i in range(0,300):
-		#time.sleep(1.0)
-		#print("Temperatuur is {} {}".format(_network.nodes[t_node].get_sensor_value(t_sensor), _network.nodes[t_node].values[t_sensor].units))
-		#print("Luminancie is {} {}".format(_network.nodes[t_node].get_sensor_value(l_sensor), _network.nodes[t_node].values[l_sensor].units))
-		  
-
-	#print("------------------------------------------------------------")
-	#print("Stop network")
-	#print("------------------------------------------------------------")
-	#_network.stop()
-	#print("Memory use : {} Mo".format( (resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024.0)))
-
+	while True:
+		#network is ready, check if Thermometers are added...
+		if _thermometers:
+			_getLock()
+			for t in _thermometers:
+				_findNodeFunction(t)
+			_releaseLock()
+		time.sleep(10 * 60)
 
 def _findNodeFunction(name):
 	global _thermometers
+	if _thermometers[name].ready: return
 	log.info("Find a node/function for : %s", name)
-	if not _network.is_ready:
-		log.error("network is not ready, cannot add %s", name)
-		return
 	for n in _network.nodes:
 		for f in _network.nodes[n].get_sensors():
 			if _network.nodes[n].name == name and _network.nodes[n].values[f].label == "Temperature":
 				_thermometers[name].node = n
-				_thermometers[name].function = f
+				_thermometers[name].tempVal = f
 				_thermometers[name].ready = True
+				if _network.nodes[n].get_battery_levels():
+					_thermometers[name].batVal = _network.nodes[n].get_battery_levels()[0]
 				return
 	log.error("cannot find node with name %s", name)
 	
@@ -193,16 +136,25 @@ def addThermometer(name):
 	log.info("Adding thermometer : %s ", name)
 	_getLock()
 	_thermometers[name] = NodeFunction()
-	if _network.is_ready:
-		_findNodeFunction(name)
+	_findNodeFunction(name)
 	_releaseLock()
 	
 def getValue(name):
 	try:
 		if _thermometers[name].ready:
-			return _network.nodes[_thermometers[name].node].get_sensor_value(_thermometers[name].function)
+			return _network.nodes[_thermometers[name].node].get_sensor_value(_thermometers[name].tempVal)
 		else:
 			return config.INVALID_TEMP
 	except Exception as e:
 		log.error("getValue : " + str(e))
 		return config.INVALID_TEMP
+
+def getBatteryLevel(name):
+	try:
+		if _thermometers[name].ready:
+			return _network.nodes[_thermometers[name].node].get_battery_level(_thermometers[name].batVal)
+		else:
+			return config.INVALID_BATTERY_LEVEL
+	except Exception as e:
+		log.error("getBatteryLevel : " + str(e))
+		return config.INVALID_BATTERY_LEVEL

@@ -11,6 +11,7 @@ ZWAVE_DEVICE="/dev/ttyS0"
 OPENZWAVE_CONFIG_FILE="ozwconfig"
 OPENZWAVE_LOG_LEVEL="Debug"
 OPENZWAVE_LOG_FILE="OZW_Log.log"
+INVALID_BATTERY_LEVEL=-100
 
 HISTORY_DIR = os.path.join(BASE_DIR, "history")
 HISTORY_INTERVAL = 10 * 60	#seconds
@@ -29,6 +30,7 @@ LOGGERS['app.views'] = logging.DEBUG
 LOGGERS['app.zwave'] = logging.DEBUG
 LOGGERS['app.history'] = logging.DEBUG	
 LOGGERS['werkzeug'] = logging.ERROR	
+LOGGERS['openzwave'] = logging.ERROR
 
 for logger, level in LOGGERS.items():
 	logging.getLogger(logger).addHandler(_ch)
