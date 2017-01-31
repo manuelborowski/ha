@@ -126,7 +126,8 @@ def _findNodeFunction(name):
 				_thermometers[name].tempVal = f
 				_thermometers[name].ready = True
 				if _network.nodes[n].get_battery_levels():
-					_thermometers[name].batVal = _network.nodes[n].get_battery_levels()[0]
+					for k in _network.nodes[n].get_battery_levels().keys():
+						_thermometers[name].batVal = k
 				return
 	log.error("cannot find node with name %s", name)
 	

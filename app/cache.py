@@ -28,6 +28,7 @@ class Thermostat:
 		self.active = False
 		self.measured = self.desired
 		self.follow_schedule = dbThermostat.follow_schedule
+		self.batLevel = -100
 
 	def __repr__(self):
 		return '<name[%r]/e[%r]/s[%r]/d[%r]/a[%r]/m[%r]>' % \
@@ -117,6 +118,12 @@ def setThermostatValue(hw_id=None, desired=0):
 	_thermostats[hw_id].dirty = True
 	_dirty = True
 	_releaseLock()
+		
+def getThermostat(hw_id=None):
+	if hw_id:
+		return _thermostats[hw_id]
+	else:
+		return None
 		
 def getThermostatParameters(hw_id=None):
 	return (_thermostats[hw_id].desired, _thermostats[hw_id].measured, _thermostats[hw_id].active, _thermostats[hw_id].enabled)

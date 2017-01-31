@@ -2,7 +2,7 @@
 <!doctype html>
 <head>
 <!--<meta name="viewport" content="initial-scale=1, maximum-scale=1">-->
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=0.625, user-scalable=yes" />
 <link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css" />
 <script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
 <script src="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
@@ -74,8 +74,10 @@ span {font-weight: bold;}
 				$("#{{t.hw_id}}measured").text(data.measured.toFixed(1));
 				
 				//the desired temperature
-				$("#{{t.hw_id}}range").val(data.desired);
-				$("#{{t.hw_id}}range").change();
+				$("#{{t.hw_id}}desired").text(data.desired);
+
+				//the  battery level
+				$("#{{t.hw_id}}bat_level").text(data.batLevel);
 			});
 		{% endfor %}
 		setTimeout(function(){sensor();}, 500);
@@ -117,6 +119,12 @@ span {font-weight: bold;}
 						<td><div id="{{t.hw_id}}indicator" class="heating-off"></div></td>
 						<!-- measured temperature -->
 						<td><span id="{{t.hw_id}}measured"></span>°C</td>
+						<!-- desired temperature -->
+						<td><span id="{{t.hw_id}}desired"></span>°C</td>
+						<!-- battery level of zwave device -->
+						{% if t.batLevel > -100 %}
+							<td><span id="{{t.hw_id}}bat_level"></span>%</td>
+						{% endif %}
 					</tr>
 					{% endfor %}
 					</table>

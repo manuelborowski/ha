@@ -55,9 +55,13 @@ def _button():
 
 @app.route("/_sensor/<string:thermostat>")    
 def _readSensor(thermostat):
-	desired, measured, active, enabled = cache.getThermostatParameters(thermostat)
+	#desired, measured, active, enabled = cache.getThermostatParameters(thermostat)
 	#print("d/m/a/e %d/%d/%d/%d" % (desired, measured, active, enabled))
-	return jsonify(active='on' if active else 'off', enabled='on' if enabled else 'off', measured=measured, desired=desired)
+	#return jsonify(active='on' if active else 'off', enabled='on' if enabled else 'off', measured=measured, desired=desired)
+	t = cache.getThermostat(thermostat)
+	return jsonify(active='on' if t.active else 'off', \
+		enabled='on' if t.enabled else 'off', measured=t.measured, desired=t.desired, \
+		batLevel=t.batLevel)
 	
 
 @app.route("/_setstate/<string:thermostat>")
