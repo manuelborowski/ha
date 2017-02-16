@@ -2,6 +2,7 @@ from app import models, db
 import sys, datetime, logging
 from threading import Timer, Lock
 import time
+import config
 
 log = logging.getLogger(__name__)
 
@@ -47,7 +48,13 @@ class HeatingSchedule:
 	def __repr__(self):
 		return '<day[%r]/on[%r]/off[%r]/on[%r]/off[%r]>' % \
 			(self.day, self.amHeatingOn, self.amHeatingOff, self.pmHeatingOn, type(self.pmHeatingOff))
+	
+class DigitalOut:
+	def __init__(self, pin, name):
+		self.pin = pin
+		self.name = name
 		
+_digitalOutputs = []
 _thermostats = {}
 _rooms = {}
 _schedule = []
@@ -64,7 +71,13 @@ def init():
 	log.info("starting...")
 	_updateCache()
 	_flushCache()
+	_initDigitalOutput
 
+def _initDigitalOutput():
+	global _digitalOutputs
+	for n, p in config.DO_OUTPUTS:
+		_digitalOutputs.append(DigitalOut(p, n))
+	
 
 def getThermostatList(roomName=None):
 	if roomName == None:

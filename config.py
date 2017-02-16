@@ -16,6 +16,13 @@ INVALID_BATTERY_LEVEL=-100
 HISTORY_DIR = os.path.join(BASE_DIR, "history")
 HISTORY_INTERVAL = 10 * 60	#seconds
 
+DO_NBR_OF_BYTES=2
+DO_OUTPUTS = [
+	('cvpomp1', 1),
+	('cvpomp2', 2),
+	('cvpomp3', 3),
+	('vvbadkamer', 4)
+]
 
 _ch = logging.FileHandler("automation.log", 'a')
 _frmt = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -29,6 +36,7 @@ LOGGERS['app.cache'] = logging.DEBUG
 LOGGERS['app.views'] = logging.DEBUG
 LOGGERS['app.zwave'] = logging.DEBUG
 LOGGERS['app.history'] = logging.DEBUG	
+LOGGERS['app.do'] = logging.DEBUG	
 LOGGERS['werkzeug'] = logging.ERROR	
 LOGGERS['openzwave'] = logging.ERROR
 

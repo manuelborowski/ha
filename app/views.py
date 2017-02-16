@@ -20,7 +20,6 @@ def init():
 
 @app.route("/favicon.ico")
 def favicon():
-	#print('get icon from : ' + os.path.join(app.root_path, 'static'))
 	return(url_for('static',filename='favicon.ico'))
 	#return send_from_directory(os.path.join(app.root_path, 'static'),
     #                           'favicon.ico', mimetype='image/vnd.microsoft.icon')
