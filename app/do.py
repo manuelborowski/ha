@@ -9,15 +9,14 @@ class SerialGpioOut:
 	SHCP_PIN = 16
 	DS_PIN = 20
 	STCP_PIN = 21
-	GPIO_DELAY = 0.0001
+	GPIO_DELAY = 0.001
 
-	def __init__(self, numberOfPins):
+	def __init__(self, numberOfBytes):
 		GPIO.setmode(GPIO.BCM)
 		GPIO.setup(self.SHCP_PIN, GPIO.OUT)
 		GPIO.setup(self.DS_PIN, GPIO.OUT)
 		GPIO.setup(self.STCP_PIN, GPIO.OUT)
-		self._numberOfPins = numberOfPins
-		self._numberOfBytes = int((numberOfPins+7) / 8)
+		self._numberOfBytes = numberOfBytes
 		self._data = bytearray(self._numberOfBytes)
 		self._mask = bytearray(self._numberOfBytes)
 		self._lock = Lock()
@@ -29,7 +28,7 @@ class SerialGpioOut:
 		self._lock.release()
 		
 	def _pin2ByteBit(self, pin):
-		if pin<0 or pin > (self._numberOfPins): return
+		if pin < 0 or pin >= (self._numberOfBytes * 8): return
 		byte = int(pin/8)
 		bit = pin-8*byte
 		return byte, bit
@@ -75,8 +74,7 @@ class SerialGpioOut:
 		self._getLock()
 		self._data[byte] = self._data[byte] & ((1 << bit) ^ 0xff)
 		self._releaseLock()
-		print('SPH', byte, bit, self._mask, self._data)
-		self.sendData()
+		print('SPL', byte, bit, self._mask, self._data)
 
 	def flushSession(self):
 		self.sendData()
@@ -106,9 +104,9 @@ class SerialGpioOut:
 
 # if not used as a module (standalone), run this test program 
 if __name__ == "__main__":
-	sdo = SerialGpioOut(16)
+	sdo = SerialGpioOut(2)
 	#sdo.sendData(int(sys.argv[1], 0))
-	for p in range(0, 8):
+	for p in range(0, 16):
 		sdo.setPinActiveLow(p)
 #	while True:
 #		for p in range(0, 8):
@@ -121,9 +119,16 @@ if __name__ == "__main__":
 	sdo.setPinHigh(0)
 	time.sleep(1)
 	sdo.setPinLow(0)
-	time.sleep(1)
-	sdo.setPinHigh(0)
-	time.sleep(1)
+	time.sleep(1)	
+	for p in range(0, 16):
+		sdo.setPinHigh(p)
+		time.sleep(0.2)
+	for p in range(0, 16):
+		sdo.setPinLow(p)
+		time.sleep(0.2)
+	time.sleep(2)
+	sdo.setPinLowAll()
+
 	#sdo.flushSession()	
 	
 		
