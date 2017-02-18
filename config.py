@@ -17,14 +17,24 @@ HISTORY_DIR = os.path.join(BASE_DIR, "history")
 HISTORY_INTERVAL = 10 * 60	#seconds
 
 DO_NBR_OF_BYTES=2
-DO_OUTPUTS = [
-	('cvpomp1', 1),
-	('cvpomp2', 2),
-	('cvpomp3', 3),
-	('vvbadkamer', 4),
-	('rabadkamer', 5),
-	('rayannick', 6)
-]
+DO_CVPOMP1	=	'cvpomp1'
+DO_CVPOMP2	=	'cvpomp2'
+DO_CVPOMP3	=	'cvpomp3'
+DO_VVBADKAMER	=	'vvbadkamer'
+DO_RABADKAMER	=	'rabadkamer'
+DO_RAYANNICK	=	'rayannick'
+
+DO_OUTPUTS = {
+	DO_CVPOMP1 : 1,
+	DO_CVPOMP2 : 2,
+	DO_CVPOMP3 : 3,
+	DO_VVBADKAMER : 4,
+	DO_RABADKAMER : 5,
+	DO_RAYANNICK : 6
+}
+
+#SM_WINDOW = 3600 * 24	#24 hours window
+SM_WINDOW = 20
 
 _ch = logging.FileHandler("automation.log", 'a')
 _frmt = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')

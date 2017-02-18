@@ -49,6 +49,18 @@ def _getLock():
 def _releaseLock():
 	_lock.release()
 	
+def _name2int(nameOrPin):
+	#if the parameter is a pin, return the pin, else use lookup table to translate name
+	#to pin
+	if isinstance(nameOrPin, int): return nameOrPin
+	try:
+		pin = config.DO_OUTPUTS[nameOrPin]
+		return pin
+	except Exception as e:
+		log.error('{} is not a valid output pin name'.format(nameOrPin))
+		log.error(str(e))
+		raise
+	
 def _pin2ByteBit(pin):
 	if pin < 0 or pin >= (_numberOfBytes * 8): return
 	byte = int(pin/8)
@@ -72,6 +84,7 @@ def setPinActiveHigh(pin):
 	log.info('SetPinActiveHigh {} {} {} {}'.format(byte, bit, _mask, _data))
 	
 def setPinHigh(pin):
+	pin = _name2int(pin)
 	setPinHighSession(pin)
 	_sendData()
 	
