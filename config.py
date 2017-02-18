@@ -21,7 +21,9 @@ DO_OUTPUTS = [
 	('cvpomp1', 1),
 	('cvpomp2', 2),
 	('cvpomp3', 3),
-	('vvbadkamer', 4)
+	('vvbadkamer', 4),
+	('rabadkamer', 5),
+	('rayannick', 6)
 ]
 
 _ch = logging.FileHandler("automation.log", 'a')
