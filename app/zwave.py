@@ -75,6 +75,7 @@ def start():
 	global _network
 	log.info("starting...")
 	_thermoThread = threading.Thread(target=_worker)
+	_thermoThread.setDaemon(True)
 	_thermoThread.start()
 
 

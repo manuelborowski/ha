@@ -11,6 +11,7 @@ log = logging.getLogger(__name__)
 def start():
 	log.info("starting")
 	coreThread = threading.Thread(target=worker)
+	coreThread.setDaemon(True)
 	coreThread.start()
 	tl = cache.getThermostatList()
 	for t in tl:

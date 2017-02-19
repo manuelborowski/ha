@@ -1,6 +1,8 @@
 import os, logging
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
+TEST_MODE = False
+
 INVALID_TEMP=-100
 
 SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(BASE_DIR, 'app.db')
@@ -35,6 +37,7 @@ DO_OUTPUTS = {
 
 #SM_WINDOW = 3600 * 24	#24 hours window
 SM_WINDOW = 20
+SM_ENABLE_SEND_MAIL = False
 
 _ch = logging.FileHandler("automation.log", 'a')
 _frmt = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -49,6 +52,7 @@ LOGGERS['app.views'] = logging.DEBUG
 LOGGERS['app.zwave'] = logging.DEBUG
 LOGGERS['app.history'] = logging.DEBUG	
 LOGGERS['app.do'] = logging.DEBUG	
+LOGGERS['app.sendmail'] = logging.DEBUG	
 LOGGERS['werkzeug'] = logging.ERROR	
 LOGGERS['openzwave'] = logging.ERROR
 

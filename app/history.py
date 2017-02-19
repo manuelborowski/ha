@@ -16,6 +16,7 @@ def init():
 def start():
 	log.info("starting...")
 	_historyThread = threading.Thread(target=worker)
+	_historyThread.setDaemon(True)
 	_historyThread.start()
 
 

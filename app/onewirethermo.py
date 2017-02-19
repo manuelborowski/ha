@@ -29,6 +29,7 @@ def _releaseLock():
 def start():
 	log.info("starting...")
 	_thermoThread = threading.Thread(target=_worker)
+	_thermoThread.setDaemon(True)
 	_thermoThread.start()
 
 def _worker():
