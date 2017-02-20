@@ -47,6 +47,6 @@ def worker():
 			do.setPinHigh("test")
 		except Exception as e:
 			#exceptions at this level are forwarded (email) to the administrator
-			sendmail.send('exception received in core.py', str(e))
+			sendmail.send('Message from Heating Automation', str(e))
 		
 	

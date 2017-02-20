@@ -4,7 +4,7 @@ import time, sys
 from threading import Lock
 
 import threading, time, datetime
-import logging
+import logging, sys
 import config
 
 log = logging.getLogger(__name__)
@@ -57,9 +57,7 @@ def _name2int(nameOrPin):
 		pin = config.DO_OUTPUTS[nameOrPin]
 		return pin
 	except Exception as e:
-		log.error('{} is not a valid output pin name'.format(nameOrPin))
-		log.error(str(e))
-		raise
+		raise ValueError('{}: {} : "{}" is not a valid output pin name'.format(__file__, sys._getframe().f_code.co_name, nameOrPin))
 	
 def _pin2ByteBit(pin):
 	if pin < 0 or pin >= (_numberOfBytes * 8): return
