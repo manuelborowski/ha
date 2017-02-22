@@ -14,10 +14,14 @@ DS_PIN = 20
 STCP_PIN = 21
 GPIO_DELAY = 0.0001
 
+class Pin:
+	def __init__(self):
+		self.value = False
+		self.inverse = False
+
 def init():
-	global _numberOfBytes
-	global _mask
-	global _data
+	global _numberOfPins
+	global _pins
 	global _lock
 	log.info("intializing...")
 	GPIO.setwarnings(False)
@@ -25,19 +29,18 @@ def init():
 	GPIO.setup(SHCP_PIN, GPIO.OUT)
 	GPIO.setup(DS_PIN, GPIO.OUT)
 	GPIO.setup(STCP_PIN, GPIO.OUT)
-	_numberOfBytes = config.DO_NBR_OF_BYTES
-	_data = bytearray(_numberOfBytes)
-	_mask = bytearray(_numberOfBytes)
+	_numberOfPins = config.DO_NBR_OF_BYTES * 8
+	_pins = [Pin() for _ in range(_numberOfPins)]
 	_lock = Lock()
 	
 def start():
 	log.info("starting...")
 	#the 16-relais module uses negative logic : input low -> releais active
-	for p in range(0, _numberOfBytes * 8):
+	for p in range(0, _numberOfPins):
 		setPinActiveLow(p)
 	setPinLowAll()
 	time.sleep(1)
-	for p in range(0, _numberOfBytes * 8):
+	for p in range(0, _numberOfPins):
 		setPinHigh(p)
 		time.sleep(0.1)
 	time.sleep(1)
@@ -59,65 +62,52 @@ def _name2int(nameOrPin):
 	except Exception as e:
 		raise ValueError('{}: {} : "{}" is not a valid output pin name'.format(__file__, sys._getframe().f_code.co_name, nameOrPin))
 	
-def _pin2ByteBit(pin):
-	if pin < 0 or pin >= (_numberOfBytes * 8): return
-	byte = int(pin/8)
-	bit = pin-8*byte
-	return byte, bit
-
 def setPinActiveLow(pin):
-	global _mask
-	byte, bit = _pin2ByteBit(pin)
+	_name2int(pin)
 	_getLock()
-	_mask[byte] = _mask[byte] | (1 << bit)
+	_pins[pin].inverse = True
 	_releaseLock()
-	log.info('SetPinActiveLow {} {} {} {}'.format(byte, bit, _mask, _data))
+	log.info('SetPinActiveLow {}'.format(pin))
 	
 def setPinActiveHigh(pin):
-	global _mask
-	byte, bit = _pin2ByteBit(pin)
+	_name2int(pin)
 	_getLock()
-	_mask[byte] = _mask[byte] & ((1 << bit) ^ 0xff)
+	_pins[pin].inverse = False
 	_releaseLock()
-	log.info('SetPinActiveHigh {} {} {} {}'.format(byte, bit, _mask, _data))
+	log.info('SetPinActiveHigh {}'.format(pin))
 	
 def setPinHigh(pin):
-	pin = _name2int(pin)
 	setPinHighSession(pin)
 	_sendData()
 	
 def setPinHighSession(pin):
-	global _data
-	byte, bit = _pin2ByteBit(pin)
+	pin = _name2int(pin)
 	_getLock()
-	_data[byte] = _data[byte] | (1 << bit)
+	_pins[pin].value = True
 	_releaseLock()
-	#print('SPH', byte, bit, _mask, _data)
+	#print('SPH', byte, bit, _mask, _pins)
 	
 def setPinLowAll():
-	global _data
 	_getLock()
-	_data = bytearray(_numberOfBytes)
+	for p in _pins:
+		p.value = False
 	_releaseLock()
 	_sendData()
 	
 def setPinLow(pin):
-	pin = _name2int(pin)
 	setPinLowSession(pin)
 	_sendData()
 
 def setPinLowSession(pin):
-	global _data
-	byte, bit = _pin2ByteBit(pin)
+	pin = _name2int(pin)
 	_getLock()
-	_data[byte] = _data[byte] & ((1 << bit) ^ 0xff)
+	_pins[pin].value = False
 	_releaseLock()
-	#print('SPL', byte, bit, _mask, _data)
+	#print('SPL', byte, bit, _mask, _pins)
 	
 def getPinValue(pin):
 	pin = _name2int(pin)
-	byte, bit = _pin2ByteBit(pin)
-	return (_data[byte] & (1 << bit)) > 0
+	return _pins[pin].value
 	
 
 def flushSession(self):
@@ -125,23 +115,19 @@ def flushSession(self):
 
 def _sendData():
 	_getLock()
-	GPIO.output(STCP_PIN, GPIO.LOW)
-	for d, m in zip(reversed(_data), reversed(_mask)):
-		mask = 0x80
-		#print(m, d)
-		for i in range(0, 8):
-			time.sleep(GPIO_DELAY)
-			GPIO.output(SHCP_PIN, GPIO.LOW)
-			level = GPIO.HIGH if (m ^ d) & mask else GPIO.LOW
-			GPIO.output(DS_PIN, level)
-			#print ("|  %d %x %x %x" % (1 if level == GPIO.HIGH else 0, d, m, mask))
-			time.sleep(GPIO_DELAY)
-			GPIO.output(SHCP_PIN, GPIO.HIGH)
-			#print (" | %d %x %x %x" % (1 if level == GPIO.HIGH else 0, d, m, mask))
-			mask = mask >> 1
+	GPIO.output(STCP_PIN, GPIO.LOW)	#store clock low
+	for p in _pins[::-1]:	#reverse list
+		time.sleep(GPIO_DELAY)
+		GPIO.output(SHCP_PIN, GPIO.LOW)	#shift clock low
+		level = p.value != p.inverse
+		GPIO.output(DS_PIN, level)	#data strobe
+		#print ("|  %d %x %x %x" % (1 if level == GPIO.HIGH else 0, d, m, mask))
+		time.sleep(GPIO_DELAY)
+		GPIO.output(SHCP_PIN, GPIO.HIGH)	#shift clock high : sample data strobe
+		#print (" | %d %x %x %x" % (1 if level == GPIO.HIGH else 0, d, m, mask))
 	time.sleep(GPIO_DELAY)
-	GPIO.output(STCP_PIN, GPIO.HIGH)
+	GPIO.output(STCP_PIN, GPIO.HIGH)	#store clock high : data to pins
 	time.sleep(GPIO_DELAY)
-	GPIO.output(STCP_PIN, GPIO.LOW)
+	GPIO.output(STCP_PIN, GPIO.LOW)	#store clock low
 	_releaseLock()
 		
