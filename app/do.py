@@ -18,6 +18,10 @@ class Pin:
 	def __init__(self):
 		self.value = False
 		self.inverse = False
+		self.name = ""
+		
+	def __repr__(self):
+		return('{}/{}/{}'.format(self.name, self.value, self.inverse))
 
 def init():
 	global _numberOfPins
@@ -31,6 +35,13 @@ def init():
 	GPIO.setup(STCP_PIN, GPIO.OUT)
 	_numberOfPins = config.DO_NBR_OF_BYTES * 8
 	_pins = [Pin() for _ in range(_numberOfPins)]
+	#if a name exists for the pin, add it...
+	try:
+		for k,v in config.DO_OUTPUTS.items():
+			_pins[v].name = k
+	except IndexError:
+		log.error('{} : index of pin is out of range : {}/{}'.format(__file__, v, k))
+		
 	_lock = Lock()
 	
 def start():
@@ -109,6 +120,8 @@ def getPinValue(pin):
 	pin = _name2int(pin)
 	return _pins[pin].value
 	
+def getPinList():
+	return _pins
 
 def flushSession(self):
 	self._sendData()

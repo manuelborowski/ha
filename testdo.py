@@ -9,7 +9,12 @@ from app import do
 print('start...')
 do.init()
 do.start()
+print('list of pins...')
+pins = do.getPinList()
+for p in pins:
+	print(p)
 print('stop...')
+
 
 #for i in range(0, config.DO_NBR_OF_BYTES * 8):
 	#do.setPinActiveLow(i)
