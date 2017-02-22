@@ -102,6 +102,7 @@ def setPinLowAll():
 	_sendData()
 	
 def setPinLow(pin):
+	pin = _name2int(pin)
 	setPinLowSession(pin)
 	_sendData()
 
@@ -112,6 +113,12 @@ def setPinLowSession(pin):
 	_data[byte] = _data[byte] & ((1 << bit) ^ 0xff)
 	_releaseLock()
 	#print('SPL', byte, bit, _mask, _data)
+	
+def getPinValue(pin):
+	pin = _name2int(pin)
+	byte, bit = _pin2ByteBit(pin)
+	return (_data[byte] & (1 << bit)) > 0
+	
 
 def flushSession(self):
 	self._sendData()
@@ -137,36 +144,4 @@ def _sendData():
 	time.sleep(GPIO_DELAY)
 	GPIO.output(STCP_PIN, GPIO.LOW)
 	_releaseLock()
-		
-
-## if not used as a module (standalone), run this test program 
-#if __name__ == "__main__":
-	#config.DO_NBR_OF_BYTES=2
-	#init()
-	##sdo._sendData(int(sys.argv[1], 0))
-	#for p in range(0, 16):
-		#setPinActiveLow(p)
-##	while True:
-##		for p in range(0, 8):
-##			sdo.setPinHigh(p)
-##			time.sleep(0.1)
-##		for p in range(0, 8):
-##			sdo.setPinLow(p)
-##			time.sleep(0.1)
-	#setPinLowAll()
-	#setPinHigh(0)
-	#time.sleep(1)
-	#setPinLow(0)
-	#time.sleep(1)	
-	#for p in range(0, 16):
-		#setPinHigh(p)
-		#time.sleep(0.2)
-	#for p in range(0, 16):
-		#setPinLow(p)
-		#time.sleep(0.2)
-	#time.sleep(2)
-	#setPinLowAll()
-
-	##sdo.flushSession()	
-	
 		

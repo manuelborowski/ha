@@ -19,6 +19,7 @@ HISTORY_DIR = os.path.join(BASE_DIR, "history")
 HISTORY_INTERVAL = 10 * 60	#seconds
 
 DO_NBR_OF_BYTES=2
+DO_RARENEE	=	'rarenee'
 DO_CVPOMP1	=	'cvpomp1'
 DO_CVPOMP2	=	'cvpomp2'
 DO_CVPOMP3	=	'cvpomp3'
@@ -27,6 +28,7 @@ DO_RABADKAMER	=	'rabadkamer'
 DO_RAYANNICK	=	'rayannick'
 
 DO_OUTPUTS = {
+	DO_RARENEE : 0,
 	DO_CVPOMP1 : 1,
 	DO_CVPOMP2 : 2,
 	DO_CVPOMP3 : 3,

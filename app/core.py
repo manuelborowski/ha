@@ -44,7 +44,6 @@ def worker():
 					t.active = True if t.measured < t.desired else False
 				else:
 					t.active = False
-			do.setPinHigh("test")
 		except Exception as e:
 			#exceptions at this level are forwarded (email) to the administrator
 			sendmail.send('Message from Heating Automation', str(e))
