@@ -11,8 +11,8 @@ do.init()
 do.start()
 print('list of pins...')
 pins = do.getPinList()
-for p in pins:
-	print(p)
+for n, p in enumerate(pins):
+	print('{}/{}'.format(n, p))
 print('stop...')
 
 

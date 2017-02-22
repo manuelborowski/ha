@@ -1,7 +1,7 @@
 from app import app, cache
 import logging, os
 from flask import render_template, request, jsonify, url_for, send_from_directory
-from app import Pins
+from app import Pins, do
 
 log = logging.getLogger(__name__)
 
@@ -17,19 +17,23 @@ def init():
 	_menuItems=cache.getRoomList()
 	_menuItems.append(MenuItem('instellen'))
 	_menuItems.append(MenuItem('overzicht'))
+	_menuItems.append(MenuItem('uitgangen'))
 
 @app.route("/favicon.ico")
 def favicon():
 	return(url_for('static',filename='favicon.ico'))
-	#return send_from_directory(os.path.join(app.root_path, 'static'),
-    #                           'favicon.ico', mimetype='image/vnd.microsoft.icon')
-    
+
+
+#different html pages    
 @app.route("/", methods=['GET', 'POST'])
 @app.route("/<string:menuItem>", methods=['GET', 'POST'])
 def Index(menuItem=None):
 	if menuItem == None: menuItem = cache.getRoomList()[0].name
 	log.debug('menuItem : %s' % menuItem)
-	if menuItem == 'overzicht' :
+	if menuItem == 'uitgangen' :
+		return render_template("digitalout.html", uptime=GetUptime(), 
+			menuItems=_menuItems, pins=do.getPinList())
+	elif menuItem == 'overzicht' :
 		return render_template("tempoverview.html", uptime=GetUptime(), 
 			menuItems=_menuItems, thermostats=cache.getThermostatList())
 	elif menuItem == 'instellen' :
@@ -39,8 +43,6 @@ def Index(menuItem=None):
 		return render_template("base.html", uptime=GetUptime(), room=menuItem, 
 			menuItems=_menuItems, thermostats=cache.getThermostatList(menuItem))
 
-# ajax GET call this function to set led state
-# depeding on the GET parameter sent
 
 # ajax GET call this function periodically to read button state
 # the state is sent back as json data
@@ -52,6 +54,8 @@ def _button():
         state = "not pressed"
     return jsonify(buttonState=state)
 
+
+#read the thermostats
 @app.route("/_sensor/<string:thermostat>")    
 def _readSensor(thermostat):
 	#desired, measured, active, enabled = cache.getThermostatParameters(thermostat)
@@ -62,7 +66,7 @@ def _readSensor(thermostat):
 		enabled='on' if t.enabled else 'off', measured=t.measured, desired=t.desired, \
 		batLevel=t.batLevel)
 	
-
+#set the state of a thermostat (enable or disable)
 @app.route("/_setstate/<string:thermostat>")
 def _setState(thermostat):
     state = request.args.get('state')
@@ -74,12 +78,30 @@ def _setState(thermostat):
         cache.setThermostatEnabled(thermostat, False)
     return ""
 
+#set the temperature
 @app.route("/_settemperature/<string:thermostat>")
 def _setTemperature(thermostat):
     desired = request.args.get('val')
     cache.setThermostatValue(thermostat, desired)
     return ""
-	
+
+#set a digital output
+@app.route("/_setDigitalOut/<string:pin>")
+def _setDigitalOut(pin):
+	state = request.args.get('state')
+	if state=='on':
+		do.setPinHigh(int(pin))
+	else:
+		do.setPinLow(int(pin))
+	return ""
+
+#get a digital output
+@app.route("/_getDigitalOut/<string:pin>")
+def _getDigitalOut(pin):
+	value = do.getPinValue(int(pin))
+	return jsonify(enabled='on' if value else 'off')
+
+#set the heating schedule
 @app.route("/_setSchedule/<string:item>")
 def _setSchedule(item):
 	val = request.args.get('val')

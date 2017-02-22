@@ -37,8 +37,8 @@ DO_OUTPUTS = {
 	DO_RAYANNICK : 6
 }
 
-#SM_WINDOW = 3600 * 24	#24 hours window
-SM_WINDOW = 20
+SM_WINDOW = 3600 * 24	#24 hours window
+#SM_WINDOW = 20
 SM_ENABLE_SEND_MAIL = False
 
 _ch = logging.FileHandler("automation.log", 'a')

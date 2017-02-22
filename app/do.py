@@ -53,8 +53,7 @@ def start():
 	time.sleep(1)
 	for p in range(0, _numberOfPins):
 		setPinHigh(p)
-		time.sleep(0.1)
-	time.sleep(1)
+		#time.sleep(0.1)
 	setPinLowAll()
 	
 def _getLock():

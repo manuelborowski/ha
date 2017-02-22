@@ -1,0 +1,85 @@
+
+<!doctype html>
+<head>
+<!--<meta name="viewport" content="initial-scale=1, maximum-scale=1">-->
+<meta name="viewport" content="width=device-width, initial-scale=0.625, user-scalable=yes" />
+<link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css" />
+<script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
+<script src="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
+</head>
+
+<style>
+</style>
+
+<script>
+	{% for p in pins %}
+		// enable or disable the digital output
+		$(document).on("change", '#{{loop.index-1}}enable', function() 
+		{
+			var v = $('#{{loop.index-1}}enable').val();
+			$.getJSON('/_setDigitalOut/{{loop.index-1}}', {state: v});
+		});     
+
+	{% endfor %}
+
+	//poll the digital outputs once a second
+	$(function digitalOut()
+	{
+		{% for p in pins %}
+			$.getJSON('/_getDigitalOut/{{loop.index-1}}', function(data)
+			{
+				//the enable button
+				$("#{{loop.index-1}}enable").val(data.enabled).slider('refresh')
+			});
+		{% endfor %}
+		setTimeout(function(){digitalOut();}, 1000);
+	});
+
+
+	//load a new room
+	function goto_room(url)
+	{
+		window.location.href = url;
+	}
+</script>
+<!-- Test the digital output module -->
+<body>
+		<div data-role="page"  data-theme="b">
+
+			<!-- The menu at the left side -->
+			<div data-role="panel" id="menu">
+			  {% for mi in menuItems %}
+				<a id="/{{ mi.name }}" class="ui-btn ui-btn-inline ui-corner-all ui-shadow" onclick="return goto_room(this.id)">{{ mi.name }}</a>
+			  {% endfor %}
+			</div>
+			
+			<div data-role="header">
+				<a href="#menu" class="ui-btn ui-icon-bars ui-btn-icon-left">menu</a>
+				<h3>{{ room }}</h3>
+			</div>
+			
+			<div data-role="content">
+				<form>
+					<table>
+					{% for p in pins %}
+					<tr>
+						<!-- pin number -->
+						<td>{{loop.index-1}}</td>
+						<!-- pin name -->
+						<td>{{p.name}}</td>
+						<!-- enable digital output -->
+						<td><select id="{{loop.index-1}}enable" name="do" data-role="slider">
+							<option value="off" {{ 'selected' if not p.value }}>uit</option>
+							<option value="on" {{ 'selected' if p.value }}>aan</option>
+						</select></td>
+					</tr>
+					{% endfor %}
+					</table>
+				</form>
+			</div>
+			<div data-role="footer">
+				<div><h4>The ha is {{uptime}}</h4></div>
+			</div>
+		</div>
+
+</body>
