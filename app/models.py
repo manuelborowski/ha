@@ -52,3 +52,21 @@ class HeatingSchedule(db.Model):
 	
 	def __repr__(self):
 		return '<day/on/off %r/%r/%r>' % (self.day, self.heaton, self.heatoff)
+
+
+#content of table
+#day 	index 	time
+#0		0		6:00	monday, index=even -> on	
+#0		1		8:00	monday, index=odd  -> off
+#0		2		16:00	monday, on
+#0		3		22:00	monday, off
+#1		0		6:00	tuesday, on
+# ...
+class HeatingSchedule2(db.Model):
+	id = db.Column(db.Integer, primary_key=True)
+	day = db.Column(db.Integer)
+	index = db.Column(db.Integer)
+	time = db.Column(db.DateTime)
+	
+	def __repr__(self):
+		return '<day/on/off %r/%r/%r>' % (self.day, self.index, self.time)

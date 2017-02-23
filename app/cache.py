@@ -129,6 +129,79 @@ def setHeatingSchedule(day, period, enabled, val):
 	_dirty = True
 	_releaseLock()
 	
+#------------------heating schedule 2----------------------
+
+_schedule2 = []
+
+#Warning : MUST be executed inside _lock() ... _unlock()
+def _updateHeatingSchedule2Cache():
+		hl = models.HeatingSchedule.query.order_by(models.HeatingSchedule.index). \
+				order_by(models.HeatingSchedule.heattype).all()
+	_schedule = []
+	for h, i in zip(hl[0::2], hl[1::2]):
+		_schedule.append(HeatingSchedule(h, i))
+	#log.debug("thermostats " + str(_thermostats))
+	#log.debug("rooms " + str(_rooms))
+	#log.debug("schedule " + str(_schedule))
+
+#Warning : MUST be executed inside _lock() ... _unlock()
+def _flushHeatingSchedule2Cache():
+	global _dirty
+	if _dirty:
+		_getLock()
+		_dirty = False
+		for t in _thermostats.values():
+			if t.dirty == True:
+				models.Thermostat.query.filter_by(hw_id=t.hw_id).first().desired = t.desired
+				models.Thermostat.query.filter_by(hw_id=t.hw_id).first().enabled = t.enabled
+		for s in _schedule:
+			if s.dirty == True:
+				l = models.HeatingSchedule.query.filter_by(day=s.day).order_by(models.HeatingSchedule.heattype).all()
+				l[0].heaton = s.amHeatingOn
+				l[0].heatoff = s.amHeatingOff
+				l[1].heaton = s.pmHeatingOn
+				l[1].heaton = s.pmHeatingOn
+		db.session.commit()
+		_releaseLock()
+		_updateCache()
+
+	#every xx seconds, scan for dirty (changed) objects and commit them to the database.
+
+class HeatingSchedule2:
+	def __init__(self):
+		self.day = dbHeatingScheduleAm.day
+		self.index = dbHeatingScheduleAm.index
+		self.amHeatingOn = dbHeatingScheduleAm.heaton
+		self.amHeatingOff = dbHeatingScheduleAm.heatoff
+		self.pmHeatingOn = dbHeatingSchedulePm.heaton
+		self.pmHeatingOff = dbHeatingSchedulePm.heatoff
+		self.dirty = False
+		
+	def __repr__(self):
+		return '<day[%r]/on[%r]/off[%r]/on[%r]/off[%r]>' % \
+			(self.day, self.amHeatingOn, self.amHeatingOff, self.pmHeatingOn, type(self.pmHeatingOff))
+	
+def getHeatingSchedule2List():
+	return _schedule
+
+def setHeatingSchedule2(day, period, enabled, val):
+	global _dirty
+	_getLock()
+	for h in _schedule:
+		if h.day == day:
+			if period == 'am':
+				if enabled == 'on':
+					h.amHeatingOn = datetime.datetime.strptime(val, '%H:%M')
+				else:
+					h.amHeatingOff = datetime.datetime.strptime(val, '%H:%M')
+			else:
+				if enabled == 'on':
+					h.pmHeatingOn = datetime.datetime.strptime(val, '%H:%M')
+				else:
+					h.pmHeatingOff = datetime.datetime.strptime(val, '%H:%M')
+			h.dirty = True
+	_dirty = True
+	_releaseLock()
 #------------------thermostats----------------------
 
 class Thermostat:
