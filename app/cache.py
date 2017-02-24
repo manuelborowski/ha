@@ -38,14 +38,7 @@ def _updateCache():
 	rl = models.Room.query.all()
 	for r in rl:
 		_rooms[r.name] = Room(r)
-	hl = models.HeatingSchedule.query.order_by(models.HeatingSchedule.index). \
-				order_by(models.HeatingSchedule.heattype).all()
-	_schedule = []
-	for h, i in zip(hl[0::2], hl[1::2]):
-		_schedule.append(HeatingSchedule(h, i))
-	#log.debug("thermostats " + str(_thermostats))
-	#log.debug("rooms " + str(_rooms))
-	#log.debug("schedule " + str(_schedule))
+	_updateHeatingSchedule2Cache()
 	_releaseLock()
 
 def _flushCache():
@@ -57,20 +50,14 @@ def _flushCache():
 			if t.dirty == True:
 				models.Thermostat.query.filter_by(hw_id=t.hw_id).first().desired = t.desired
 				models.Thermostat.query.filter_by(hw_id=t.hw_id).first().enabled = t.enabled
-		for s in _schedule:
-			if s.dirty == True:
-				l = models.HeatingSchedule.query.filter_by(day=s.day).order_by(models.HeatingSchedule.heattype).all()
-				l[0].heaton = s.amHeatingOn
-				l[0].heatoff = s.amHeatingOff
-				l[1].heaton = s.pmHeatingOn
-				l[1].heaton = s.pmHeatingOn
+		_flushHeatingSchedule2Cache()
 		db.session.commit()
 		_releaseLock()
 		_updateCache()
 
 	#every xx seconds, scan for dirty (changed) objects and commit them to the database.
 	#If no dirty objects then the database is not accessed.
-	t = Timer(600, _flushCache)
+	t = Timer(config.CACHE_UPDATE_DB_DELAY, _flushCache)
 	t.start()
 	log.info('done committing to database')
 
@@ -132,74 +119,53 @@ def setHeatingSchedule(day, period, enabled, val):
 #------------------heating schedule 2----------------------
 
 _schedule2 = []
+_DAY_OF_WEEK = ['maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag', 'zaterdag', 'zondag']
 
 #Warning : MUST be executed inside _lock() ... _unlock()
 def _updateHeatingSchedule2Cache():
-		hl = models.HeatingSchedule.query.order_by(models.HeatingSchedule.index). \
-				order_by(models.HeatingSchedule.heattype).all()
-	_schedule = []
-	for h, i in zip(hl[0::2], hl[1::2]):
-		_schedule.append(HeatingSchedule(h, i))
-	#log.debug("thermostats " + str(_thermostats))
-	#log.debug("rooms " + str(_rooms))
-	#log.debug("schedule " + str(_schedule))
-
+	global _schedule2
+	_schedule2 = []
+	for i,d in enumerate(_DAY_OF_WEEK):
+		tl = models.HeatingSchedule2.query.filter(models.HeatingSchedule2.day==i).\
+								order_by(models.HeatingSchedule2.index).all()
+		l = []
+		for t in tl: 
+			l.append(t.time)
+		_schedule2.append(HeatingSchedule2(i, d, l))
+		log.info(_schedule2[i])
+			
+			
 #Warning : MUST be executed inside _lock() ... _unlock()
 def _flushHeatingSchedule2Cache():
-	global _dirty
-	if _dirty:
-		_getLock()
-		_dirty = False
-		for t in _thermostats.values():
-			if t.dirty == True:
-				models.Thermostat.query.filter_by(hw_id=t.hw_id).first().desired = t.desired
-				models.Thermostat.query.filter_by(hw_id=t.hw_id).first().enabled = t.enabled
-		for s in _schedule:
-			if s.dirty == True:
-				l = models.HeatingSchedule.query.filter_by(day=s.day).order_by(models.HeatingSchedule.heattype).all()
-				l[0].heaton = s.amHeatingOn
-				l[0].heatoff = s.amHeatingOff
-				l[1].heaton = s.pmHeatingOn
-				l[1].heaton = s.pmHeatingOn
-		db.session.commit()
-		_releaseLock()
-		_updateCache()
+	for i, s in enumerate(_schedule2):
+		if s.dirty:
+			tl = models.HeatingSchedule2.query.filter(models.HeatingSchedule2.day==i).\
+											order_by(models.HeatingSchedule2.index).all()
+			for i, t in enumerate(tl):
+				t.time = s.timeList[i]
 
-	#every xx seconds, scan for dirty (changed) objects and commit them to the database.
 
 class HeatingSchedule2:
-	def __init__(self):
-		self.day = dbHeatingScheduleAm.day
-		self.index = dbHeatingScheduleAm.index
-		self.amHeatingOn = dbHeatingScheduleAm.heaton
-		self.amHeatingOff = dbHeatingScheduleAm.heatoff
-		self.pmHeatingOn = dbHeatingSchedulePm.heaton
-		self.pmHeatingOff = dbHeatingSchedulePm.heatoff
+	def __init__(self, index, day, timeList):
+		self.index = index
+		self.day = day
+		self.timeList = timeList
 		self.dirty = False
 		
 	def __repr__(self):
-		return '<day[%r]/on[%r]/off[%r]/on[%r]/off[%r]>' % \
-			(self.day, self.amHeatingOn, self.amHeatingOff, self.pmHeatingOn, type(self.pmHeatingOff))
+		return '<day/dirty/times : {}/{}/{}>'.format(self.day, self.dirty, self.timeList)
 	
 def getHeatingSchedule2List():
-	return _schedule
+	return _schedule2
 
-def setHeatingSchedule2(day, period, enabled, val):
+#day : 0..6 (monday = 0)
+#index : 0..3
+def setHeatingSchedule2(day, index, val):
+	log.info('setHeatingSchedule : day/index/val : {}/{}/{}'.format(day, index, val))
 	global _dirty
 	_getLock()
-	for h in _schedule:
-		if h.day == day:
-			if period == 'am':
-				if enabled == 'on':
-					h.amHeatingOn = datetime.datetime.strptime(val, '%H:%M')
-				else:
-					h.amHeatingOff = datetime.datetime.strptime(val, '%H:%M')
-			else:
-				if enabled == 'on':
-					h.pmHeatingOn = datetime.datetime.strptime(val, '%H:%M')
-				else:
-					h.pmHeatingOff = datetime.datetime.strptime(val, '%H:%M')
-			h.dirty = True
+	_schedule2[day].timeList[index] = datetime.datetime.strptime(val, '%H:%M')
+	_schedule2[day].dirty = True
 	_dirty = True
 	_releaseLock()
 #------------------thermostats----------------------

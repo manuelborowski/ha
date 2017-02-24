@@ -69,4 +69,4 @@ class HeatingSchedule2(db.Model):
 	time = db.Column(db.DateTime)
 	
 	def __repr__(self):
-		return '<day/on/off %r/%r/%r>' % (self.day, self.index, self.time)
+		return '<day/index/time : {}/{}/{}>'.format(self.day, self.index, self.time)

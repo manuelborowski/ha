@@ -1,0 +1,76 @@
+
+<!doctype html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css" />
+<script src="http://code.jquery.com/jquery-1.11.3.min.js"></script>
+<script src="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
+</head>
+
+<style>
+h3, h4 {text-align: center;}
+span {font-weight: bold;}
+</style>
+
+<script>
+	$(document).on("change", '[id$=-select]', function() 
+	{
+		$.getJSON('/_setSchedule2/'.concat(this.id), {val: this.value});
+	});     
+
+	//load a new room
+	function goto_room(url)
+	{
+		window.location.href = url;
+	}
+</script>
+<body>
+		<div data-role="page"  data-theme="b">
+
+			<!-- The menu at the left side -->
+			<div data-role="panel" id="menu">
+			  {% for mi in menuItems %}
+				<a id="/{{ mi.name }}" class="ui-btn ui-btn-inline ui-corner-all ui-shadow" onclick="return goto_room(this.id)">{{ mi.name }}</a>
+			  {% endfor %}
+			</div>
+			
+			<div data-role="header">
+				<a href="#menu" class="ui-btn ui-icon-bars ui-btn-icon-left">menu</a>
+				<h3>algemene instellingen</h3>
+			</div>
+			
+			<div data-role="content">
+				<form>
+					<table>
+						<tr>
+							<th>dag</th><th>van</th><th>tot</th><th>van</th><th>tot</th>
+						</tr>
+						{% for s in schedule %}
+						<tr>
+							<!-- day -->
+							<td>{{s.day}}</td>
+							{% set day = loop.index-1 %}
+							{% for t in s.timeList %}
+								<td><select id="{{day}}-{{loop.index-1}}-select">
+									{% for h in range(0, 23) %}
+										{%for m in range (0, 50, 10) %}
+											<option value="{{'%02d:%02d'|format(h,m)}}" 
+												{{'selected' if t.strftime('%H:%M') == '%02d:%02d'|format(h,m) }} >
+												{{'%02d:%02d'|format(h,m)}}</option>
+										{% endfor %}
+									{% endfor %}
+							{% endfor %}
+							</select></td>
+						</tr>
+						{% endfor %}
+						<tr>
+						</tr>
+					</table>
+				</form>
+			</div>
+			<div data-role="footer">
+				<div><h4>The ha is {{uptime}}</h4></div>
+			</div>
+		</div>
+
+</body>

@@ -9,6 +9,8 @@ SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(BASE_DIR, 'app.db')
 SQLALCHEMY_MIGRATE_REPO = os.path.join(BASE_DIR, 'db_repository')
 SQLALCHEMY_TRACK_MODIFICATIONS = False
 
+CACHE_UPDATE_DB_DELAY = 10
+
 ZWAVE_DEVICE="/dev/ttyS0"
 OPENZWAVE_CONFIG_FILE="ozwconfig"
 OPENZWAVE_LOG_LEVEL="Debug"

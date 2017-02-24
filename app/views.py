@@ -37,8 +37,8 @@ def Index(menuItem=None):
 		return render_template("tempoverview.html", uptime=GetUptime(), 
 			menuItems=_menuItems, thermostats=cache.getThermostatList())
 	elif menuItem == 'instellen' :
-		return render_template("setschedule.html", uptime=GetUptime(), 
-			menuItems=_menuItems, schedule=cache.getHeatingScheduleList())
+		return render_template("setschedule2.html", uptime=GetUptime(), 
+			menuItems=_menuItems, schedule=cache.getHeatingSchedule2List())
 	else:
 		return render_template("base.html", uptime=GetUptime(), room=menuItem, 
 			menuItems=_menuItems, thermostats=cache.getThermostatList(menuItem))
@@ -105,9 +105,16 @@ def _getDigitalOut(pin):
 @app.route("/_setSchedule/<string:item>")
 def _setSchedule(item):
 	val = request.args.get('val')
-	print(item, val)
 	items = item.split('-')
 	cache.setHeatingSchedule(items[0], items[1], items[2], val)
+	return ""
+	
+#set the heating schedule, version 2
+@app.route("/_setSchedule2/<string:item>")
+def _setSchedule2(item):
+	val = request.args.get('val')
+	items = item.split('-')
+	cache.setHeatingSchedule2(int(items[0]), int(items[1]), val)
 	return ""
 	
 	
