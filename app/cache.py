@@ -77,48 +77,11 @@ class Room:
 def getRoomList():
 	return sorted(list(_rooms.values()), key=lambda room: room.name)
 	
-#------------------heating schedule----------------------
-
-
-class HeatingSchedule:
-	def __init__(self, dbHeatingScheduleAm, dbHeatingSchedulePm):
-		self.day = dbHeatingScheduleAm.day
-		self.index = dbHeatingScheduleAm.index
-		self.amHeatingOn = dbHeatingScheduleAm.heaton
-		self.amHeatingOff = dbHeatingScheduleAm.heatoff
-		self.pmHeatingOn = dbHeatingSchedulePm.heaton
-		self.pmHeatingOff = dbHeatingSchedulePm.heatoff
-		self.dirty = False
-		
-	def __repr__(self):
-		return '<day[%r]/on[%r]/off[%r]/on[%r]/off[%r]>' % \
-			(self.day, self.amHeatingOn, self.amHeatingOff, self.pmHeatingOn, type(self.pmHeatingOff))
-	
-def getHeatingScheduleList():
-	return _schedule
-
-def setHeatingSchedule(day, period, enabled, val):
-	global _dirty
-	_getLock()
-	for h in _schedule:
-		if h.day == day:
-			if period == 'am':
-				if enabled == 'on':
-					h.amHeatingOn = datetime.datetime.strptime(val, '%H:%M')
-				else:
-					h.amHeatingOff = datetime.datetime.strptime(val, '%H:%M')
-			else:
-				if enabled == 'on':
-					h.pmHeatingOn = datetime.datetime.strptime(val, '%H:%M')
-				else:
-					h.pmHeatingOff = datetime.datetime.strptime(val, '%H:%M')
-			h.dirty = True
-	_dirty = True
-	_releaseLock()
 	
 #------------------heating schedule 2----------------------
 
 _schedule2 = []
+_version2 = 1
 _DAY_OF_WEEK = ['maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag', 'zaterdag', 'zondag']
 
 #Warning : MUST be executed inside _lock() ... _unlock()
@@ -142,31 +105,49 @@ def _flushHeatingSchedule2Cache():
 			tl = models.HeatingSchedule2.query.filter(models.HeatingSchedule2.day==i).\
 											order_by(models.HeatingSchedule2.index).all()
 			for i, t in enumerate(tl):
-				t.time = s.timeList[i]
+				t.time = s.timeList[i].time
 
 
 class HeatingSchedule2:
+	class TimeState:
+		def __init__(self, time, state):
+			self.time = time
+			self.state = state
+			
+		def __repr__(self):
+			return '<state/time : {}/{}>'.format(self.state, self.time)
+			
 	def __init__(self, index, day, timeList):
 		self.index = index
 		self.day = day
-		self.timeList = timeList
 		self.dirty = False
-		
+		self.timeList = []
+		active = True
+		for t in timeList:
+			self.timeList.append(self.TimeState(t, active))
+			active = not active
+			
 	def __repr__(self):
 		return '<day/dirty/times : {}/{}/{}>'.format(self.day, self.dirty, self.timeList)
 	
 def getHeatingSchedule2List():
 	return _schedule2
+	
+def getHeatingSchedule2Version():
+	return _version2
 
 #day : 0..6 (monday = 0)
 #index : 0..3
 def setHeatingSchedule2(day, index, val):
-	log.info('setHeatingSchedule : day/index/val : {}/{}/{}'.format(day, index, val))
 	global _dirty
+	global _version2
+	log.info('setHeatingSchedule : day/index/val/version : {}/{}/{}'.\
+					format(day, index, val, _version2))
 	_getLock()
-	_schedule2[day].timeList[index] = datetime.datetime.strptime(val, '%H:%M')
+	_schedule2[day].timeList[index].time = datetime.datetime.strptime(val, '%H:%M')
 	_schedule2[day].dirty = True
 	_dirty = True
+	_version2 += 1
 	_releaseLock()
 #------------------thermostats----------------------
 

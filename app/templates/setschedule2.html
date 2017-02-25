@@ -55,7 +55,7 @@ span {font-weight: bold;}
 									{% for h in range(0, 23) %}
 										{%for m in range (0, 50, 10) %}
 											<option value="{{'%02d:%02d'|format(h,m)}}" 
-												{{'selected' if t.strftime('%H:%M') == '%02d:%02d'|format(h,m) }} >
+												{{'selected' if t.time.strftime('%H:%M') == '%02d:%02d'|format(h,m) }} >
 												{{'%02d:%02d'|format(h,m)}}</option>
 										{% endfor %}
 									{% endfor %}

@@ -1,4 +1,5 @@
-import threading, time, logging
+import threading, time, logging, datetime
+import config
 from app import cache
 from app import onewirethermo as owt
 from app import zwave
@@ -25,7 +26,7 @@ def start():
 		
 def worker():
 	while True:
-		time.sleep(1)
+		time.sleep(config.CORE_WORKER_DELAY)
 		try:
 			tl = cache.getThermostatList()
 			for t in tl:
@@ -48,4 +49,67 @@ def worker():
 			#exceptions at this level are forwarded (email) to the administrator
 			sendmail.send('Message from Heating Automation', str(e))
 		
+_hsVersion = 0
+_hsList = []
+_hsNextListIndex = -1
+_hsNextMoment = 0
+_hsPreviousState = False
+_hsState = False
+_hsHeatingGoesOn = False
+_hsHeatingGoesOff = False
+
+def _checkHeatingSchedule():
+	if _hsVersion != cache.getHeatingSchedule2Version():
+		#There is an update in the heating schedule, check it out
+		_updateHeatingData()
+		return
+		
+	now = datetime.datetime.now()
+	if (now.dayofweek() * 1440 + now.hour * 60 + now.minute) > _hsNextMoment:
+			
+		
+def _updateHeatingData():
+	global _hsList
+	global _hsNextListIndex
+	global _hsVersion
+	global _hsNextMoment
+	global _hsState
+	global _hsPreviousState
+	global _hsHeatingGoesOn
+	global _hsHeatingGoesOff
 	
+	_hsVersion = cache.getHeatingSchedule2Version()
+	now = datetime.datetime.now()
+	#delta time, in minutes, from monday 00:00
+	currentMinutes = now.dayofweek() * 1440 + now.hour * 60 + now.minute
+	hsl = cache.getHeatingSchedule2List()
+	
+	#create a local list.  This is timeconsuming, but happens only when the original
+	#schedule list is changed, which does not happen often...
+	_hsList = []
+	for hs in hsl:
+		for t in hs.timeList:
+			_hsList.append(t)
+	
+	found = False
+	for i, t in enumerate(_hsList):
+		scheduleMinutes = t.time.dayofweek() * 1440 + t.time.hour * 60 + t.time.minute
+		if scheduleMinutes > currentMinutes:
+			_hsNextListIndex = 
+			_hsNextMoment = scheduleMinutes
+			_hsState = not t.state
+			_hsHeatingGoesOn = _hsState
+			_hsHeatingGoesOff = not _hsState
+			_hsPreviousState = not _hsState
+			found = True
+	if not found:
+		#corner case : current time is sunday evening, after last entry in timeList
+		#Use first entry in timeList of monday
+		t = hsl[0].timeList[0]
+		_hsNextMoment = t.time.dayofweek() * 1440 + t.time.hour * 60 + t.time.minute
+		_hsState = not t.state
+		_hsHeatingGoesOn = _hsState
+		_hsHeatingGoesOff = not _hsState
+		_hsPreviousState = not _hsState
+		found = True
+			
