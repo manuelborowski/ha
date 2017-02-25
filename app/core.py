@@ -25,9 +25,10 @@ def start():
 	
 		
 def worker():
-	while True:
-		time.sleep(config.CORE_WORKER_DELAY)
-		try:
+	#try:
+		heatingCheckCtr = 0
+		while True:
+			time.sleep(config.CORE_WORKER_DELAY)
 			tl = cache.getThermostatList()
 			for t in tl:
 				typeId = t.hw_id.split("_")
@@ -45,71 +46,107 @@ def worker():
 					t.active = True if t.measured < t.desired else False
 				else:
 					t.active = False
-		except Exception as e:
-			#exceptions at this level are forwarded (email) to the administrator
-			sendmail.send('Message from Heating Automation', str(e))
+			heatingCheckCtr += 1
+			if heatingCheckCtr > 10:
+				heatingCheckCtr = 0
+				hsCheckSchedule()
+	#except Exception as e:
+		#exceptions at this level are forwarded (email) to the administrator
+	#	sendmail.send('Message from Heating Automation', str(e))
+			
+class HeatingList:
+	def __init__(self):
+		self.crnt = 0
+		self.lst = []
+		
+	def _time2min(self, time):
+		return time.weekday() * 1440 + time.hour * 60 + time.minute
+		
+	def append(self, item):
+		self.lst.append(item)
+		
+	def init(self):
+		minutes  = self._time2min(datetime.datetime.now())
+		last = len(self.lst) - 1
+		if (minutes >= self._time2min(self.lst[last].time)):
+			#sunday, after the last time entry and before midnight
+			self.crnt = last
+		else:
+			for i in range(len(self.lst)):
+				if minutes < self_time2min(self.lst[i].time):
+					self.crnt = i - 1
+					break;
+			if self.crnt < 0: self.crnt = last
+
+	def check(self):
+		if (self.crnt == len(self.lst) - 1) and (datetime.datetime.now().weekday() == 6):
+			#sunday, after the last time entry : return if the current day is still sunday
+			return False
+		minutes  = self._time2min(datetime.datime.now())
+		nxt = self.crnt + 1
+		if nxt == len(self.lst): nxt = 0 #wrap around
+		if minutes > self.lst[nxt]: #passed a time entry, shift to next time entry
+			self.crnt = nxt
+			return True
+		else:
+			return False
+			
+	def state(self):
+		return self.lst[self.crnt].state
+		
+	def __repr__(self):
+		return '<crnt/lst : {}/{}>'.format(self.crnt, self.lst)
+		
 		
 _hsVersion = 0
-_hsList = []
-_hsNextListIndex = -1
-_hsNextMoment = 0
-_hsPreviousState = False
-_hsState = False
+_hsList = HeatingList()
+
 _hsHeatingGoesOn = False
 _hsHeatingGoesOff = False
 
-def _checkHeatingSchedule():
-	if _hsVersion != cache.getHeatingSchedule2Version():
-		#There is an update in the heating schedule, check it out
-		_updateHeatingData()
-		return
-		
-	now = datetime.datetime.now()
-	if (now.dayofweek() * 1440 + now.hour * 60 + now.minute) > _hsNextMoment:
-			
-		
-def _updateHeatingData():
-	global _hsList
-	global _hsNextListIndex
-	global _hsVersion
-	global _hsNextMoment
-	global _hsState
-	global _hsPreviousState
+def hsCheckSchedule():
 	global _hsHeatingGoesOn
 	global _hsHeatingGoesOff
+	if _hsVersion != cache.getHeatingSchedule2Version():
+		#There is an update in the heating schedule, check it out
+		_updateHeatingList()
+		print('list update : {}'.format(_hsList))
+		return True
+	print('list check : {}'.format(_hsList))
+	if _hsList.check():
+		_hsHeatingGoesOn = _hsList.state()
+		_hsHeatingGoesOff = not _hsHeatingGoesOn
+		return True
+	return False
+
 	
+def hsState():
+	return _hsList.state()
+	
+def hsHeatingGoesOn():
+	state = _hsHeatingGoesOn
+	_hsHeatingGoesOn = False
+	return state
+	
+def hsHeatingGoesOff():
+	state = _hsHeatingGoesOff
+	_hsHeatingGoesOff = False
+	return state
+		
+def _updateHeatingList():
+	global _hsList
+	global _hsVersion
+	global _hsHeatingGoesOn
+	global _hsHeatingGoesOff
 	_hsVersion = cache.getHeatingSchedule2Version()
-	now = datetime.datetime.now()
-	#delta time, in minutes, from monday 00:00
-	currentMinutes = now.dayofweek() * 1440 + now.hour * 60 + now.minute
-	hsl = cache.getHeatingSchedule2List()
-	
 	#create a local list.  This is timeconsuming, but happens only when the original
 	#schedule list is changed, which does not happen often...
-	_hsList = []
+	hsl = cache.getHeatingSchedule2List()
+	_hsList = HeatingList()
 	for hs in hsl:
 		for t in hs.timeList:
 			_hsList.append(t)
+	_hsList.init()
+	_hsHeatingGoesOn = _hsList.state()
+	_hsHeatingGoesOff = not _hsHeatingGoesOn
 	
-	found = False
-	for i, t in enumerate(_hsList):
-		scheduleMinutes = t.time.dayofweek() * 1440 + t.time.hour * 60 + t.time.minute
-		if scheduleMinutes > currentMinutes:
-			_hsNextListIndex = 
-			_hsNextMoment = scheduleMinutes
-			_hsState = not t.state
-			_hsHeatingGoesOn = _hsState
-			_hsHeatingGoesOff = not _hsState
-			_hsPreviousState = not _hsState
-			found = True
-	if not found:
-		#corner case : current time is sunday evening, after last entry in timeList
-		#Use first entry in timeList of monday
-		t = hsl[0].timeList[0]
-		_hsNextMoment = t.time.dayofweek() * 1440 + t.time.hour * 60 + t.time.minute
-		_hsState = not t.state
-		_hsHeatingGoesOn = _hsState
-		_hsHeatingGoesOff = not _hsState
-		_hsPreviousState = not _hsState
-		found = True
-			

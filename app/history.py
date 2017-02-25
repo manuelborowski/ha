@@ -38,7 +38,7 @@ def worker():
 	while True:
 		log.debug('Updating history')
 		time.sleep(config.HISTORY_INTERVAL)
-		#get current date/time, extract year and month and check if correspondig file exists
+		#get crnt date/time, extract year and month and check if correspondig file exists
 		now = datetime.datetime.now()
 		hfn = os.path.join(config.HISTORY_DIR, "{}-{}.his".format(now.year, now.month))
 		hf = _getFileHandler(hfn)
