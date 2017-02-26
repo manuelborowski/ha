@@ -49,7 +49,9 @@ def worker():
 			heatingCheckCtr += 1
 			if heatingCheckCtr > 10:
 				heatingCheckCtr = 0
-				hsCheckSchedule()
+				if hsCheckSchedule():
+					log.debug("at {} : heating state is : {}".format(datetime.datetime.now(), hsState()))
+					log.debug("goes on/off : {}/{}".format(hsHeatingGoesOn(), hsHeatingGoesOff()))
 	#except Exception as e:
 		#exceptions at this level are forwarded (email) to the administrator
 	#	sendmail.send('Message from Heating Automation', str(e))
@@ -60,6 +62,7 @@ class HeatingList:
 		self.lst = []
 		
 	def _time2min(self, time):
+		#print('_time2min : {}/{}'.format(time, time.weekday() * 1440 + time.hour * 60 + time.minute))
 		return time.weekday() * 1440 + time.hour * 60 + time.minute
 		
 	def append(self, item):
@@ -73,7 +76,7 @@ class HeatingList:
 			self.crnt = last
 		else:
 			for i in range(len(self.lst)):
-				if minutes < self_time2min(self.lst[i].time):
+				if minutes < self._time2min(self.lst[i].time):
 					self.crnt = i - 1
 					break;
 			if self.crnt < 0: self.crnt = last
@@ -82,10 +85,10 @@ class HeatingList:
 		if (self.crnt == len(self.lst) - 1) and (datetime.datetime.now().weekday() == 6):
 			#sunday, after the last time entry : return if the current day is still sunday
 			return False
-		minutes  = self._time2min(datetime.datime.now())
+		minutes  = self._time2min(datetime.datetime.now())
 		nxt = self.crnt + 1
 		if nxt == len(self.lst): nxt = 0 #wrap around
-		if minutes > self.lst[nxt]: #passed a time entry, shift to next time entry
+		if minutes > self._time2min(self.lst[nxt].time): #passed a time entry, shift to next time entry
 			self.crnt = nxt
 			return True
 		else:
@@ -110,9 +113,9 @@ def hsCheckSchedule():
 	if _hsVersion != cache.getHeatingSchedule2Version():
 		#There is an update in the heating schedule, check it out
 		_updateHeatingList()
-		print('list update : {}'.format(_hsList))
+		#print('list update : {}'.format(_hsList))
 		return True
-	print('list check : {}'.format(_hsList))
+	#print('list check : {}'.format(_hsList))
 	if _hsList.check():
 		_hsHeatingGoesOn = _hsList.state()
 		_hsHeatingGoesOff = not _hsHeatingGoesOn
@@ -124,11 +127,13 @@ def hsState():
 	return _hsList.state()
 	
 def hsHeatingGoesOn():
+	global _hsHeatingGoesOn
 	state = _hsHeatingGoesOn
 	_hsHeatingGoesOn = False
 	return state
 	
 def hsHeatingGoesOff():
+	global _hsHeatingGoesOff
 	state = _hsHeatingGoesOff
 	_hsHeatingGoesOff = False
 	return state

@@ -28,7 +28,6 @@ def init():
 	_flushCache()
 	_initDigitalOutput
 
-
 def _updateCache():
 	global _schedule
 	_getLock()
@@ -144,11 +143,20 @@ def setHeatingSchedule2(day, index, val):
 	log.info('setHeatingSchedule : day/index/val/version : {}/{}/{}'.\
 					format(day, index, val, _version2))
 	_getLock()
-	_schedule2[day].timeList[index].time = datetime.datetime.strptime(val, '%H:%M')
+	#_schedule2[day].timeList[index].time = datetime.datetime.strptime(val, '%H:%M')
+	_schedule2[day].timeList[index].time = datetime.datetime.strptime("2017:2:{}:{}".format(20+day, val), "%Y:%m:%d:%H:%M")
 	_schedule2[day].dirty = True
 	_dirty = True
 	_version2 += 1
 	_releaseLock()
+	
+def setDefaultHeatingSchedule():
+	for d in range(7):
+		setHeatingSchedule2(d, 0, '06:00')
+		setHeatingSchedule2(d, 1, '08:00')
+		setHeatingSchedule2(d, 2, '16:00')
+		setHeatingSchedule2(d, 3, '22:00')
+		
 #------------------thermostats----------------------
 
 class Thermostat:
