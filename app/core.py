@@ -110,7 +110,7 @@ _hsHeatingGoesOff = False
 def hsCheckSchedule():
 	global _hsHeatingGoesOn
 	global _hsHeatingGoesOff
-	if _hsVersion != cache.getHeatingSchedule2Version():
+	if _hsVersion != cache.getHeatingScheduleVersion():
 		#There is an update in the heating schedule, check it out
 		_updateHeatingList()
 		#print('list update : {}'.format(_hsList))
@@ -143,10 +143,10 @@ def _updateHeatingList():
 	global _hsVersion
 	global _hsHeatingGoesOn
 	global _hsHeatingGoesOff
-	_hsVersion = cache.getHeatingSchedule2Version()
+	_hsVersion = cache.getHeatingScheduleVersion()
 	#create a local list.  This is timeconsuming, but happens only when the original
 	#schedule list is changed, which does not happen often...
-	hsl = cache.getHeatingSchedule2List()
+	hsl = cache.getHeatingScheduleList()
 	_hsList = HeatingList()
 	for hs in hsl:
 		for t in hs.timeList:

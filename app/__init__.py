@@ -10,19 +10,19 @@ if not config.TEST_MODE:
 	from app import Pins
 	from app import views, models, cache, core, onewirethermo, zwave, history, do
 
-	cache.init()
-	views.init()
-	do.init()
-	Pins.Init()
-	zwave.init()
-	history.init()
+	#cache.init()
+	#views.init()
+	#do.init()
+	#Pins.Init()
+	#zwave.init()
+	#history.init()
 
-	onewirethermo.start()
-	zwave.start()
-	history.start()
-	do.start()
-	sendmail.start()
-	core.start()
+	#onewirethermo.start()
+	#zwave.start()
+	#history.start()
+	#do.start()
+	#sendmail.start()
+	#core.start()
 
 
 	

@@ -37,7 +37,7 @@ def _updateCache():
 	rl = models.Room.query.all()
 	for r in rl:
 		_rooms[r.name] = Room(r)
-	_updateHeatingSchedule2Cache()
+	_updateHeatingScheduleCache()
 	_releaseLock()
 
 def _flushCache():
@@ -49,7 +49,7 @@ def _flushCache():
 			if t.dirty == True:
 				models.Thermostat.query.filter_by(hw_id=t.hw_id).first().desired = t.desired
 				models.Thermostat.query.filter_by(hw_id=t.hw_id).first().enabled = t.enabled
-		_flushHeatingSchedule2Cache()
+		_flushHeatingScheduleCache()
 		db.session.commit()
 		_releaseLock()
 		_updateCache()
@@ -84,30 +84,30 @@ _version2 = 1
 _DAY_OF_WEEK = ['maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag', 'zaterdag', 'zondag']
 
 #Warning : MUST be executed inside _lock() ... _unlock()
-def _updateHeatingSchedule2Cache():
+def _updateHeatingScheduleCache():
 	global _schedule2
 	_schedule2 = []
 	for i,d in enumerate(_DAY_OF_WEEK):
-		tl = models.HeatingSchedule2.query.filter(models.HeatingSchedule2.day==i).\
-								order_by(models.HeatingSchedule2.index).all()
+		tl = models.HeatingSchedule.query.filter(models.HeatingSchedule.day==i).\
+								order_by(models.HeatingSchedule.index).all()
 		l = []
 		for t in tl: 
 			l.append(t.time)
-		_schedule2.append(HeatingSchedule2(i, d, l))
+		_schedule2.append(HeatingSchedule(i, d, l))
 		log.info(_schedule2[i])
 			
 			
 #Warning : MUST be executed inside _lock() ... _unlock()
-def _flushHeatingSchedule2Cache():
+def _flushHeatingScheduleCache():
 	for i, s in enumerate(_schedule2):
 		if s.dirty:
-			tl = models.HeatingSchedule2.query.filter(models.HeatingSchedule2.day==i).\
-											order_by(models.HeatingSchedule2.index).all()
+			tl = models.HeatingSchedule.query.filter(models.HeatingSchedule.day==i).\
+											order_by(models.HeatingSchedule.index).all()
 			for i, t in enumerate(tl):
 				t.time = s.timeList[i].time
 
 
-class HeatingSchedule2:
+class HeatingSchedule:
 	class TimeState:
 		def __init__(self, time, state):
 			self.time = time
@@ -129,15 +129,15 @@ class HeatingSchedule2:
 	def __repr__(self):
 		return '<day/dirty/times : {}/{}/{}>'.format(self.day, self.dirty, self.timeList)
 	
-def getHeatingSchedule2List():
+def getHeatingScheduleList():
 	return _schedule2
 	
-def getHeatingSchedule2Version():
+def getHeatingScheduleVersion():
 	return _version2
 
 #day : 0..6 (monday = 0)
 #index : 0..3
-def setHeatingSchedule2(day, index, val):
+def setHeatingSchedule(day, index, val):
 	global _dirty
 	global _version2
 	log.info('setHeatingSchedule : day/index/val/version : {}/{}/{}'.\
@@ -152,10 +152,10 @@ def setHeatingSchedule2(day, index, val):
 	
 def setDefaultHeatingSchedule():
 	for d in range(7):
-		setHeatingSchedule2(d, 0, '06:00')
-		setHeatingSchedule2(d, 1, '08:00')
-		setHeatingSchedule2(d, 2, '16:00')
-		setHeatingSchedule2(d, 3, '22:00')
+		setHeatingSchedule(d, 0, '06:00')
+		setHeatingSchedule(d, 1, '08:00')
+		setHeatingSchedule(d, 2, '16:00')
+		setHeatingSchedule(d, 3, '22:00')
 		
 #------------------thermostats----------------------
 

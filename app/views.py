@@ -38,7 +38,7 @@ def Index(menuItem=None):
 			menuItems=_menuItems, thermostats=cache.getThermostatList())
 	elif menuItem == 'instellen' :
 		return render_template("setschedule2.html", uptime=GetUptime(), 
-			menuItems=_menuItems, schedule=cache.getHeatingSchedule2List())
+			menuItems=_menuItems, schedule=cache.getHeatingScheduleList())
 	else:
 		return render_template("base.html", uptime=GetUptime(), room=menuItem, 
 			menuItems=_menuItems, thermostats=cache.getThermostatList(menuItem))
@@ -114,7 +114,7 @@ def _setSchedule(item):
 def _setSchedule2(item):
 	val = request.args.get('val')
 	items = item.split('-')
-	cache.setHeatingSchedule2(int(items[0]), int(items[1]), val)
+	cache.setHeatingSchedule(int(items[0]), int(items[1]), val)
 	return ""
 	
 	
