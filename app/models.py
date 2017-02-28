@@ -39,7 +39,7 @@ class Thermostat(db.Model):
 # ...
 class HeatingSchedule(db.Model):
 	id = db.Column(db.Integer, primary_key=True)
-	time = db.Column(db.Integer, unique=True)
+	time = db.Column(db.Integer)
 	
 	def __repr__(self):
 		return '<day/index/time : {}>'.format(self.time)

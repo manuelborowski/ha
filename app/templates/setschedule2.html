@@ -45,17 +45,16 @@ span {font-weight: bold;}
 						<tr>
 							<th>dag</th><th>van</th><th>tot</th><th>van</th><th>tot</th>
 						</tr>
-						{% for s in schedule %}
+						{% for d in daysofweek %}
 						<tr>
 							<!-- day -->
-							<td>{{s.day}}</td>
-							{% set day = loop.index-1 %}
-							{% for t in s.timeList %}
-								<td><select id="{{day}}-{{loop.index-1}}-select">
+							<td>{{d}}</td>
+							{% for t in schedule[d] %}
+								<td><select id="{{t.id}}-select">
 									{% for h in range(0, 23) %}
 										{%for m in range (0, 50, 10) %}
 											<option value="{{'%02d:%02d'|format(h,m)}}" 
-												{{'selected' if t.time.strftime('%H:%M') == '%02d:%02d'|format(h,m) }} >
+												{{'selected' if t.val == '%02d:%02d'|format(h,m) }} >
 												{{'%02d:%02d'|format(h,m)}}</option>
 										{% endfor %}
 									{% endfor %}

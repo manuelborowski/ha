@@ -60,7 +60,6 @@ def _flushCache():
 	t.start()
 	log.info('done committing to database')
 
-
 #------------------rooms----------------------
 
 class Room:
@@ -77,86 +76,81 @@ def getRoomList():
 	return sorted(list(_rooms.values()), key=lambda room: room.name)
 	
 	
-#------------------heating schedule 2----------------------
+#------------------heating schedule ----------------------
 
-_schedule2 = []
-_version2 = 1
-_DAY_OF_WEEK = ['maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag', 'zaterdag', 'zondag']
+class IdValDirty:
+	def __init__(self, id, val):
+		self.id = id
+		self.val = val
+		self.dirty = False
+		
+	def __repr__(self):
+		return '<id/val/dirty : {}/{}/{}>'.format(self.id, self.val, self.dirty)
+
+_schedule = []
+_version = 1
 
 #Warning : MUST be executed inside _lock() ... _unlock()
 def _updateHeatingScheduleCache():
-	global _schedule2
-	_schedule2 = []
-	for i,d in enumerate(_DAY_OF_WEEK):
-		tl = models.HeatingSchedule.query.filter(models.HeatingSchedule.day==i).\
-								order_by(models.HeatingSchedule.index).all()
-		l = []
-		for t in tl: 
-			l.append(t.time)
-		_schedule2.append(HeatingSchedule(i, d, l))
-		log.info(_schedule2[i])
-			
+	global _schedule
+	global _version
+	_schedule=[]
+	sl = models.HeatingSchedule.query.order_by(models.HeatingSchedule.time).all()
+	for s in sl: _schedule.append(IdValDirty(s.id, s.time))
+	_version += 1
 			
 #Warning : MUST be executed inside _lock() ... _unlock()
 def _flushHeatingScheduleCache():
-	for i, s in enumerate(_schedule2):
+	for s in _schedule:
 		if s.dirty:
-			tl = models.HeatingSchedule.query.filter(models.HeatingSchedule.day==i).\
-											order_by(models.HeatingSchedule.index).all()
-			for i, t in enumerate(tl):
-				t.time = s.timeList[i].time
+			t = models.HeatingSchedule.query.filter(models.HeatingSchedule.id==s.id).first()
+			t.time = s.val
 
-
-class HeatingSchedule:
-	class TimeState:
-		def __init__(self, time, state):
-			self.time = time
-			self.state = state
-			
-		def __repr__(self):
-			return '<state/time : {}/{}>'.format(self.state, self.time)
-			
-	def __init__(self, index, day, timeList):
-		self.index = index
-		self.day = day
-		self.dirty = False
-		self.timeList = []
-		active = True
-		for t in timeList:
-			self.timeList.append(self.TimeState(t, active))
-			active = not active
-			
-	def __repr__(self):
-		return '<day/dirty/times : {}/{}/{}>'.format(self.day, self.dirty, self.timeList)
-	
 def getHeatingScheduleList():
-	return _schedule2
-	
-def getHeatingScheduleVersion():
-	return _version2
+	return _schedule
 
-#day : 0..6 (monday = 0)
-#index : 0..3
-def setHeatingSchedule(day, index, val):
+def getHeatingScheduleForViewing():	
+	day = 0
+	threshold = 1440
+	tl = []
+	dct = {}
+	for t in _schedule:
+		if t.val > threshold:
+			dct[config.DAY_OF_WEEK_LIST[day]] = tl
+			day += 1
+			threshold += 1440
+			tl = []
+		minInDay = t.val + 1440 - threshold
+		shour = int(minInDay / 60)
+		smin = minInDay - 60 * shour
+		tl.append(IdValDirty(t.id, '%02d:%02d' % (shour, smin)))
+	#add sunday...
+	dct[config.DAY_OF_WEEK_LIST[day]] = tl
+	print('Schedule list for viewing : {}'.format(dct))
+	return dct
+
+			
+def getHeatingScheduleVersion():
+	return _version
+
+#id : database index
+#val : 06:30
+def setHeatingSchedule(id, val):
 	global _dirty
-	global _version2
-	log.info('setHeatingSchedule : day/index/val/version : {}/{}/{}'.\
-					format(day, index, val, _version2))
+	global _version
+	log.info('setHeatingSchedule : id/val/version : {}/{}/{}'.format(id, val, _version))
 	_getLock()
-	#_schedule2[day].timeList[index].time = datetime.datetime.strptime(val, '%H:%M')
-	_schedule2[day].timeList[index].time = datetime.datetime.strptime("2017:2:{}:{}".format(20+day, val), "%Y:%m:%d:%H:%M")
-	_schedule2[day].dirty = True
+	for s in _schedule:
+		if s.id == id:
+			day = int(s.val / 1440)  #calculate the day
+			hm = val.split(':')
+			s.val = day * 1440 + int(hm[0]) * 60 + int(hm[1])
+			s.dirty = True
+			break
 	_dirty = True
-	_version2 += 1
+	_version += 1
 	_releaseLock()
-	
-def setDefaultHeatingSchedule():
-	for d in range(7):
-		setHeatingSchedule(d, 0, '06:00')
-		setHeatingSchedule(d, 1, '08:00')
-		setHeatingSchedule(d, 2, '16:00')
-		setHeatingSchedule(d, 3, '22:00')
-		
+			
 #------------------thermostats----------------------
 
 class Thermostat:
@@ -172,7 +166,7 @@ class Thermostat:
 		self.dirty = False
 		self.active = False
 		self.measured = self.desired
-		self.follow_schedule = dbThermostat.follow_schedule
+		self.scheduled = dbThermostat.scheduled
 		self.batLevel = -100
 
 	def __repr__(self):

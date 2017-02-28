@@ -1,7 +1,7 @@
-from app import app, cache
 import logging, os
 from flask import render_template, request, jsonify, url_for, send_from_directory
-from app import Pins, do
+import config
+from app import Pins, do, app, cache
 
 log = logging.getLogger(__name__)
 
@@ -38,7 +38,8 @@ def Index(menuItem=None):
 			menuItems=_menuItems, thermostats=cache.getThermostatList())
 	elif menuItem == 'instellen' :
 		return render_template("setschedule2.html", uptime=GetUptime(), 
-			menuItems=_menuItems, schedule=cache.getHeatingScheduleList())
+			menuItems=_menuItems, schedule=cache.getHeatingScheduleForViewing(),
+			daysofweek = config.DAY_OF_WEEK_LIST)
 	else:
 		return render_template("base.html", uptime=GetUptime(), room=menuItem, 
 			menuItems=_menuItems, thermostats=cache.getThermostatList(menuItem))
@@ -101,20 +102,13 @@ def _getDigitalOut(pin):
 	value = do.getPinValue(int(pin))
 	return jsonify(enabled='on' if value else 'off')
 
-#set the heating schedule
-@app.route("/_setSchedule/<string:item>")
-def _setSchedule(item):
-	val = request.args.get('val')
-	items = item.split('-')
-	cache.setHeatingSchedule(items[0], items[1], items[2], val)
-	return ""
-	
 #set the heating schedule, version 2
+#item : <database-id>-select
 @app.route("/_setSchedule2/<string:item>")
 def _setSchedule2(item):
 	val = request.args.get('val')
 	items = item.split('-')
-	cache.setHeatingSchedule(int(items[0]), int(items[1]), val)
+	cache.setHeatingSchedule(int(items[0]), val)
 	return ""
 	
 	

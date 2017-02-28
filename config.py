@@ -5,11 +5,14 @@ TEST_MODE = False
 
 INVALID_TEMP=-100
 
+DAY_OF_WEEK_LIST = ['maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag', 'zaterdag', 'zondag']
+
 SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(BASE_DIR, 'app.db')
 SQLALCHEMY_MIGRATE_REPO = os.path.join(BASE_DIR, 'db_repository')
 SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 CACHE_UPDATE_DB_DELAY = 24 * 3600 
+#CACHE_UPDATE_DB_DELAY = 10
 
 CORE_WORKER_DELAY = 1
 

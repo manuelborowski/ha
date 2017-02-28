@@ -108,17 +108,30 @@ def newSchedule(day, time):
 		print('day/time : {}/{} bestaat al'.format(day, time))
 		
 #start...
-for r in _rooms:
-	newRoom(r)
-	
-for t in _thermostats:
-	newThermostat(t)
-	
-for t in _thermostats:
-	linkRoomToThermostate(t.room_id)
-	
-for i, d in enumerate(_heatingschedule):
-	for t in d:
-			newSchedule(i, t)
+
+def fillTables():
+	for r in _rooms:
+		newRoom(r)
+		
+	for t in _thermostats:
+		newThermostat(t)
+		
+	for t in _thermostats:
+		linkRoomToThermostate(t.room_id)
+		
+	for i, d in enumerate(_heatingschedule):
+		for t in d:
+				newSchedule(i, t)
+
+def dropTables():
+	meta = db.metadata
+	for table in reversed(meta.sorted_tables):
+		print('Clear table %s' % table)	
+		db.session.execute(table.delete())
+	db.session.commit()
+
+
+dropTables()
+fillTables()
 
 print('stop db tools')
