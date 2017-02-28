@@ -126,7 +126,7 @@ def getHeatingScheduleForViewing():
 		tl.append(IdValDirty(t.id, '%02d:%02d' % (shour, smin)))
 	#add sunday...
 	dct[config.DAY_OF_WEEK_LIST[day]] = tl
-	print('Schedule list for viewing : {}'.format(dct))
+	log.debug('Schedule list for viewing : {}'.format(dct))
 	return dct
 
 			
@@ -137,6 +137,7 @@ def getHeatingScheduleVersion():
 #val : 06:30
 def setHeatingSchedule(id, val):
 	global _dirty
+	global _schedule
 	global _version
 	log.info('setHeatingSchedule : id/val/version : {}/{}/{}'.format(id, val, _version))
 	_getLock()
@@ -147,6 +148,7 @@ def setHeatingSchedule(id, val):
 			s.val = day * 1440 + int(hm[0]) * 60 + int(hm[1])
 			s.dirty = True
 			break
+	_schedule.sort(key=lambda x: x.val)
 	_dirty = True
 	_version += 1
 	_releaseLock()
