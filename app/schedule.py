@@ -15,7 +15,14 @@ def init():
 
 def start():
 	log.info("starting")
+	wrk = threading.Thread(target=worker)
+	wrk.setDaemon(True)
+	wrk.start()
 
+def worker():
+	while True:
+		_checkSchedule()
+		time.sleep(config.SCHEDULE_DELAY)
 
 			
 class HeatingList:
@@ -69,7 +76,7 @@ _hsList = HeatingList()
 _hsHeatingGoesOn = False
 _hsHeatingGoesOff = False
 
-def checkSchedule():
+def _checkSchedule():
 	global _hsHeatingGoesOn
 	global _hsHeatingGoesOff
 	if _hsVersion != cache.getHeatingScheduleVersion():

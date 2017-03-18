@@ -27,25 +27,18 @@ def start():
 		
 def worker():
 	#try:
-		hsCheckCtr = 0
-		hsCheckThreshold = config.CORE_HEATINGSCHEDULE_DELAY / config.CORE_WORKER_DELAY
 		while True:
 			time.sleep(config.CORE_WORKER_DELAY)
-			hsCheckCtr += 1
 			tl = cache.getThermostatList()
 			# check the heating schedule.
-			if hsCheckCtr > hsCheckThreshold:
-				hsCheckCtr = 0
-				
-				if schedule.checkSchedule():
-					if schedule.heatingGoesOn():
-						log.info('heating goes ON')
-						for t in tl:
-							if t.scheduled: t.enabled = True
-					if schedule.heatingGoesOff():
-						log.info('heating goes OFF')
-						for t in tl:
-							t.enabled = False
+			if schedule.heatingGoesOn():
+				log.info('heating goes ON')
+				for t in tl:
+					if t.scheduled: t.enabled = True
+			if schedule.heatingGoesOff():
+				log.info('heating goes OFF')
+				for t in tl:
+					t.enabled = False
 			# update the thermometer readings
 			for t in tl:
 				typeId = t.hw_id.split("_")
