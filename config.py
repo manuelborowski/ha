@@ -1,7 +1,9 @@
 import os, logging
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
-TEST_MODE = False
+MODULE_TEST = False
+DB_TOOLS = False
+SCHEDULE_TEST = True
 
 INVALID_TEMP=-100
 
@@ -15,6 +17,7 @@ CACHE_UPDATE_DB_DELAY = 24 * 3600
 #CACHE_UPDATE_DB_DELAY = 10
 
 CORE_WORKER_DELAY = 1
+CORE_HEATINGSCHEDULE_DELAY = 10
 
 ZWAVE_DEVICE="/dev/ttyS0"
 OPENZWAVE_CONFIG_FILE="ozwconfig"
@@ -62,6 +65,7 @@ LOGGERS['app.zwave'] = logging.DEBUG
 LOGGERS['app.history'] = logging.DEBUG	
 LOGGERS['app.do'] = logging.DEBUG	
 LOGGERS['app.sendmail'] = logging.DEBUG	
+LOGGERS['app.schedule'] = logging.DEBUG	
 LOGGERS['werkzeug'] = logging.ERROR	
 LOGGERS['openzwave'] = logging.ERROR
 

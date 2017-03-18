@@ -5,6 +5,7 @@ from app import onewirethermo as owt
 from app import zwave
 from app import sendmail
 from app import do
+from app import schedule
 
 
 log = logging.getLogger(__name__)
@@ -25,11 +26,27 @@ def start():
 	
 		
 def worker():
-	try:
-		heatingCheckCtr = 0
+	#try:
+		hsCheckCtr = 0
+		hsCheckThreshold = config.CORE_HEATINGSCHEDULE_DELAY / config.CORE_WORKER_DELAY
 		while True:
 			time.sleep(config.CORE_WORKER_DELAY)
+			hsCheckCtr += 1
 			tl = cache.getThermostatList()
+			# check the heating schedule.
+			if hsCheckCtr > hsCheckThreshold:
+				hsCheckCtr = 0
+				
+				if schedule.checkSchedule():
+					if schedule.heatingGoesOn():
+						log.info('heating goes ON')
+						for t in tl:
+							if t.scheduled: t.enabled = True
+					if schedule.heatingGoesOff():
+						log.info('heating goes OFF')
+						for t in tl:
+							t.enabled = False
+			# update the thermometer readings
 			for t in tl:
 				typeId = t.hw_id.split("_")
 				if typeId[0] =='w1':	#one wire thermometer
@@ -42,114 +59,15 @@ def worker():
 					t.measured = round(float(typeId[1]), 1)
 				else:
 					t.measured=15
+					
+				#depending on the measured temperature, the desired temperature and the state
+				#of the thermometer (enabled or not), activate the heating.
 				if t.enabled: 
 					t.active = True if t.measured < t.desired else False
 				else:
 					t.active = False
-			heatingCheckCtr += 1
-			if heatingCheckCtr > 10:
-				heatingCheckCtr = 0
-				if hsCheckSchedule():
-					log.debug("at {} : heating state is : {}".format(datetime.datetime.now(), hsState()))
-					log.debug("goes on/off : {}/{}".format(hsHeatingGoesOn(), hsHeatingGoesOff()))
-	except Exception as e:
+	#except Exception as e:
 		#exceptions at this level are forwarded (email) to the administrator
-		sendmail.send('Message from Heating Automation', str(e))
+	#	sendmail.send('Message from Heating Automation', str(e))
 	
 			
-class HeatingList:
-	def __init__(self):
-		self.crnt = 0
-		self.lst = []
-		
-	def _time2min(self, time):
-		#print('_time2min : {}/{}'.format(time, time.weekday() * 1440 + time.hour * 60 + time.minute))
-		return time.weekday() * 1440 + time.hour * 60 + time.minute
-		
-	def extend(self, lst):
-		self.lst.extend(lst)
-		
-	def init(self):
-		minutes  = self._time2min(datetime.datetime.now())
-		last = len(self.lst) - 1
-		if minutes >= self.lst[last].val:
-			#sunday, after the last time entry and before midnight
-			self.crnt = last
-		else:
-			for i in range(len(self.lst)):
-				if minutes < self.lst[i].val:
-					self.crnt = i - 1
-					break;
-			if self.crnt < 0: self.crnt = last
-
-	def check(self):
-		if (self.crnt == len(self.lst) - 1) and (datetime.datetime.now().weekday() == 6):
-			#sunday, after the last time entry : return if the current day is still sunday
-			return False
-		minutes  = self._time2min(datetime.datetime.now())
-		nxt = self.crnt + 1
-		if nxt == len(self.lst): nxt = 0 #wrap around
-		if minutes > self.lst[nxt].val: #passed a time entry, shift to next time entry
-			self.crnt = nxt
-			return True
-		else:
-			return False
-			
-	def state(self):
-		return (self.crnt % 2) == 0
-		
-	def __repr__(self):
-		return '<crnt/lst : {}/{}>'.format(self.crnt, self.lst)
-		
-		
-_hsVersion = 0
-_hsList = HeatingList()
-
-_hsHeatingGoesOn = False
-_hsHeatingGoesOff = False
-
-def hsCheckSchedule():
-	global _hsHeatingGoesOn
-	global _hsHeatingGoesOff
-	if _hsVersion != cache.getHeatingScheduleVersion():
-		#There is an update in the heating schedule, check it out
-		_updateHeatingList()
-		#print('list update : {}'.format(_hsList))
-		_hsHeatingGoesOn = _hsList.state()
-		_hsHeatingGoesOff = not _hsHeatingGoesOn
-		return True
-	#print('list check : {}'.format(_hsList))
-	if _hsList.check():
-		_hsHeatingGoesOn = _hsList.state()
-		_hsHeatingGoesOff = not _hsHeatingGoesOn
-		return True
-	return False
-
-	
-def hsState():
-	return _hsList.state()
-	
-def hsHeatingGoesOn():
-	global _hsHeatingGoesOn
-	state = _hsHeatingGoesOn
-	_hsHeatingGoesOn = False
-	return state
-	
-def hsHeatingGoesOff():
-	global _hsHeatingGoesOff
-	state = _hsHeatingGoesOff
-	_hsHeatingGoesOff = False
-	return state
-		
-def _updateHeatingList():
-	global _hsList
-	global _hsVersion
-	_hsVersion = cache.getHeatingScheduleVersion()
-	_hsList = HeatingList()
-	_hsList.extend(cache.getHeatingScheduleList())
-	#for hs in hsl:
-		#for t in hs.timeList:
-			#_hsList.append(t)
-	_hsList.init()
-	log.debug('Heating list update : {}/{}'.format(_hsVersion, _hsList))
-	

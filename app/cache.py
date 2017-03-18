@@ -95,41 +95,50 @@ def _updateHeatingScheduleCache():
 	global _schedule
 	global _version
 	_schedule=[]
-	sl = models.HeatingSchedule.query.order_by(models.HeatingSchedule.time).all()
-	for s in sl: _schedule.append(IdValDirty(s.id, s.time))
+	if config.SCHEDULE_TEST:
+		for i in range(0, 60*24*7, 10): #every 10 minutes
+			_schedule.append(IdValDirty(i, i))
+	else:
+		sl = models.HeatingSchedule.query.order_by(models.HeatingSchedule.time).all()
+		for s in sl: _schedule.append(IdValDirty(s.id, s.time))
 	_version += 1
 			
 #Warning : MUST be executed inside _lock() ... _unlock()
 def _flushHeatingScheduleCache():
+	if config.SCHEDULE_TEST: return
 	for s in _schedule:
 		if s.dirty:
 			t = models.HeatingSchedule.query.filter(models.HeatingSchedule.id==s.id).first()
 			t.time = s.val
 
 def getHeatingScheduleList():
+	_getLock()
+	_releaseLock()
 	return _schedule
 
 def getHeatingScheduleForViewing():	
-	day = 0
-	threshold = 1440
-	tl = []
-	dct = {}
-	for t in _schedule:
-		if t.val > threshold:
-			dct[config.DAY_OF_WEEK_LIST[day]] = tl
-			day += 1
-			threshold += 1440
-			tl = []
-		minInDay = t.val + 1440 - threshold
-		shour = int(minInDay / 60)
-		smin = minInDay - 60 * shour
-		tl.append(IdValDirty(t.id, '%02d:%02d' % (shour, smin)))
-	#add sunday...
-	dct[config.DAY_OF_WEEK_LIST[day]] = tl
-	log.debug('Schedule list for viewing : {}'.format(dct))
-	return dct
+	if config.SCHEDULE_TEST:
+		return {}
+	else:
+		day = 0
+		threshold = 1440
+		tl = []
+		dct = {}
+		for t in _schedule:
+			if t.val > threshold:
+				dct[config.DAY_OF_WEEK_LIST[day]] = tl
+				day += 1
+				threshold += 1440
+				tl = []
+			minInDay = t.val + 1440 - threshold
+			shour = int(minInDay / 60)
+			smin = minInDay - 60 * shour
+			tl.append(IdValDirty(t.id, '%02d:%02d' % (shour, smin)))
+		#add sunday...
+		dct[config.DAY_OF_WEEK_LIST[day]] = tl
+		log.debug('Schedule list for viewing : {}'.format(dct))
+		return dct
 
-			
 def getHeatingScheduleVersion():
 	return _version
 
@@ -148,6 +157,7 @@ def setHeatingSchedule(id, val):
 			s.val = day * 1440 + int(hm[0]) * 60 + int(hm[1])
 			s.dirty = True
 			break
+	#make sure the list is sorted!
 	_schedule.sort(key=lambda x: x.val)
 	_dirty = True
 	_version += 1

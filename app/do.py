@@ -53,7 +53,7 @@ def start():
 	time.sleep(1)
 	for p in range(0, _numberOfPins):
 		setPinHigh(p)
-		#time.sleep(0.1)
+		if config.MODULE_TEST:	time.sleep(0.1)
 	setPinLowAll()
 	
 def _getLock():

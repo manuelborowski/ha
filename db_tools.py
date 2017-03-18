@@ -1,7 +1,9 @@
 #!virtual/bin/python
+import config
+config.DB_TOOLS = True
 from app import models, db
 
-_rooms = ['yannick', 'renee']
+_rooms = ['yannick', 'renee', 'badkamer']
 
 class Thermostat:
 	def __init__(self, name, hw_id, enabled, min, max, desired, scheduled, room_id):
@@ -15,7 +17,9 @@ class Thermostat:
 		self.room_id = room_id
 		
 _thermostats = [Thermostat('yannick', 'zw_yannick', True, 10, 30, 20, False, 'yannick'),
-				Thermostat('renee', 'zw_renee', True, 10, 30, 20, False, 'renee')
+				Thermostat('renee', 'zw_renee', True, 10, 30, 20, False, 'renee'),
+				Thermostat('badkamer_ra', 'w1_28-031685468eff', True, 10, 30, 20, False, 'badkamer'),
+				Thermostat('badkamer_vv', 'w1_28-0316855a42ff', True, 10, 30, 20, False, 'badkamer'),
 				]
 
 _heatingschedule = [
@@ -78,20 +82,21 @@ def newThermostat(t):
 		print('added thermostat {}'.format(t.name))
 	except Exception as e:
 		db.session.rollback()
-		#print(str(e))
+		print(str(e))
 		print('newThermostat : {} bestaat al'.format(t.name))
 
 
-def linkRoomToThermostate(name):
+def linkRoomToThermostate(t):
 	try:
-		r = models.Room.query.filter(models.Room.name==name).first()
-		t = models.Thermostat.query.filter(models.Thermostat.name==name).first()
+		r = models.Room.query.filter(models.Room.name==t.room_id).first()
+		t = models.Thermostat.query.filter(models.Thermostat.name==t.name).first()
 		r.thermostats.append(t)
 		db.session.commit()
-		print('linked thermostat to room {}'.format(name))
+		print('linked thermostat to room {}'.format(t.name))
 	except Exception as e:
+		print(str(e))
 		db.session.rollback()
-		print('could not link thermostat to room {}.  Already linked?'.format(name))
+		print('could not link thermostat to room {}.  Already linked?'.format(t.name))
 		
 		
 def newSchedule(day, time):
@@ -117,7 +122,7 @@ def fillTables():
 		newThermostat(t)
 		
 	for t in _thermostats:
-		linkRoomToThermostate(t.room_id)
+		linkRoomToThermostate(t)
 		
 	for i, d in enumerate(_heatingschedule):
 		for t in d:

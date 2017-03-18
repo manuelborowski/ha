@@ -1,7 +1,7 @@
 #! virtual/bin/python
 
 import config, time
-config.TEST_MODE = True
+config.MODULE_TEST = True
 
 from app import sendmail
 

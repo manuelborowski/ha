@@ -1,7 +1,7 @@
 #! virtual/bin/python
 
 import config, time
-config.TEST_MODE = True
+config.MODULE_TEST = True
 config.DO_NBR_OF_BYTES = 2
 
 from app import do

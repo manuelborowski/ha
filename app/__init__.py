@@ -1,5 +1,5 @@
 import config
-if not config.TEST_MODE:
+if not config.MODULE_TEST:
 	from flask import Flask
 	from flask_sqlalchemy import SQLAlchemy
 
@@ -7,22 +7,25 @@ if not config.TEST_MODE:
 	app.config.from_object('config')
 	db = SQLAlchemy(app)
 
-	from app import Pins
-	from app import views, models, cache, core, onewirethermo, zwave, history, do
+	if not config.DB_TOOLS:
+		from app import Pins
+		from app import views, models, cache, core, onewirethermo, zwave, history, do, schedule
 
-	cache.init()
-	views.init()
-	do.init()
-	Pins.Init()
-	zwave.init()
-	history.init()
+		cache.init()
+		views.init()
+		do.init()
+		Pins.Init()
+		zwave.init()
+		history.init()
+		schedule.init()
 
-	onewirethermo.start()
-	zwave.start()
-	history.start()
-	do.start()
-	sendmail.start()
-	core.start()
+		onewirethermo.start()
+		zwave.start()
+		history.start()
+		do.start()
+		sendmail.start()
+		schedule.start()
+		core.start()
 
 
 	
