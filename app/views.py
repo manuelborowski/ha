@@ -30,16 +30,20 @@ def favicon():
 def Index(menuItem=None):
 	if menuItem == None: menuItem = cache.getRoomList()[0].name
 	log.debug('menuItem : %s' % menuItem)
+	#page with digital outputs
 	if menuItem == 'uitgangen' :
 		return render_template("digitalout.html", uptime=GetUptime(), 
 			menuItems=_menuItems, pins=do.getPinList())
+	#page with overview of all thermostats
 	elif menuItem == 'overzicht' :
 		return render_template("tempoverview.html", uptime=GetUptime(), 
 			menuItems=_menuItems, thermostats=cache.getThermostatList())
+	#page with the heating schedule overview
 	elif menuItem == 'instellen' :
 		return render_template("setschedule2.html", uptime=GetUptime(), 
 			menuItems=_menuItems, schedule=cache.getHeatingScheduleForViewing(),
 			daysofweek = config.DAY_OF_WEEK_LIST)
+	#page, per room, with an overview of the thermostats
 	else:
 		return render_template("base.html", uptime=GetUptime(), room=menuItem, 
 			menuItems=_menuItems, thermostats=cache.getThermostatList(menuItem))

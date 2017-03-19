@@ -29,14 +29,9 @@ def init():
 	_initDigitalOutput
 
 def _updateCache():
-	global _schedule
 	_getLock()
-	tl = models.Thermostat.query.all()
-	for t in tl:
-		_thermostats[t.hw_id] = Thermostat(t)
-	rl = models.Room.query.all()
-	for r in rl:
-		_rooms[r.name] = Room(r)
+	_updateRoomCache()
+	_updateThermostatCache()
 	_updateHeatingScheduleCache()
 	_releaseLock()
 
@@ -45,10 +40,7 @@ def _flushCache():
 	if _dirty:
 		_getLock()
 		_dirty = False
-		for t in _thermostats.values():
-			if t.dirty == True:
-				models.Thermostat.query.filter_by(hw_id=t.hw_id).first().desired = t.desired
-				models.Thermostat.query.filter_by(hw_id=t.hw_id).first().enabled = t.enabled
+		_flushThermostatCache()
 		_flushHeatingScheduleCache()
 		db.session.commit()
 		_releaseLock()
@@ -66,9 +58,15 @@ class Room:
 	def __init__(self, dbRoom):
 		self.id = dbRoom.id
 		self.name = dbRoom.name
+		self.enabled = False
 	
 	def __repr__(self):
 		return '<id/name %r/%r>' % (self.id, self.name)	
+
+def _updateRoomCache():
+	rl = models.Room.query.all()
+	for r in rl:
+		_rooms[r.name] = Room(r)
 		
 
 
@@ -184,7 +182,17 @@ class Thermostat:
 	def __repr__(self):
 		return '<name[%r]/e[%r]/s[%r]/d[%r]/a[%r]/m[%r]>' % \
 			(self.name, self.enabled, self.desired, self.dirty, self.active, self.measured)	
-			
+
+def _updateThermostatCache():			
+	tl = models.Thermostat.query.all()
+	for t in tl:
+		_thermostats[t.hw_id] = Thermostat(t)
+
+def _flushThermostatCache():
+	for t in _thermostats.values():
+		if t.dirty == True:
+			models.Thermostat.query.filter_by(hw_id=t.hw_id).first().desired = t.desired
+			models.Thermostat.query.filter_by(hw_id=t.hw_id).first().enabled = t.enabled
 
 def getThermostatList(roomName=None):
 	if roomName == None:
