@@ -61,19 +61,25 @@ class Room:
 		self.enabled = False
 	
 	def __repr__(self):
-		return '<id/name %r/%r>' % (self.id, self.name)	
+		return '<i/n/e %r/%r/%r>' % (self.id, self.name, self.enabled)	
 
 def _updateRoomCache():
 	rl = models.Room.query.all()
 	for r in rl:
 		_rooms[r.name] = Room(r)
 		
-
-
 def getRoomList():
 	return sorted(list(_rooms.values()), key=lambda room: room.name)
 	
+def setRoomStatus(name=None, enabled=False):
+	_getLock()
+	log.info('changed state of room {} to {}'.format(name, enabled))
+	_rooms[name].enabled = enabled
+	_releaseLock()
 	
+def getRoomStatus(name=None):
+	return _rooms[name].enabled
+
 #------------------heating schedule ----------------------
 
 class IdValDirty:

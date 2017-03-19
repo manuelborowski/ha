@@ -39,6 +39,12 @@ span {font-weight: bold;}
 </style>
 
 <script>
+	$(document).on("change", '#{{room}}enable', function() 
+	{
+		var v = $('#{{room}}enable').val();
+		$.getJSON('/_setroomstate/{{room}}', {state: v});
+	});     
+
 	{% for t in thermostats %}
 		// enable or disable the thermostat
 		$(document).on("change", '#{{t.hw_id}}enable', function() 
@@ -58,6 +64,12 @@ span {font-weight: bold;}
 	//poll the sensors every second
 	$(function sensor()
 	{
+		$.getJSON('/_getroomstatus/{{room}}', function(data)
+		{
+			//the enable button
+			$("#{{room}}enable").val(data.status).slider('refresh')
+		});
+
 		{% for t in thermostats %}
 			$.getJSON('/_sensor/{{t.hw_id}}', function(data)
 			{
@@ -66,10 +78,7 @@ span {font-weight: bold;}
 					$("#{{t.hw_id}}indicator").attr("class", "heating-on");
 				} else {
 					$("#{{t.hw_id}}indicator").attr("class", "heating-off");
-				}
-				//the enable button
-				$("#{{t.hw_id}}enable").val(data.enabled).slider('refresh')
-				
+				}				
 				//the measured temperature
 				$("#{{t.hw_id}}measured").text(data.measured.toFixed(1));
 				
@@ -103,22 +112,30 @@ span {font-weight: bold;}
 			
 			<div data-role="header">
 				<a href="#menu" class="ui-btn ui-icon-bars ui-btn-icon-left">menu</a>
-				<h3>{{ room }}</h3>
+				<h3>
+					<!-- room name -->
+					{{ room }}
+				</h3>
 			</div>
 			
 			<div data-role="content">
 				<form>
 					<table>
+					<tr>
+						<td>Verwarming</td>
+						<td>
+							<!-- enable room -->
+							<select id="{{room}}enable" name="heating" data-role="slider">
+									<option value="off" {{ 'selected' if status }}>uit</option>
+									<option value="on" {{ 'selected' if status }}>aan</option>
+							</select>
+						</td>
+					</tr>
 					{% for t in thermostats %}
 					<tr>
 						<td>{{t.name}}</td>
 					</tr>
 					<tr>
-						<!-- enable thermostat -->
-						<td><select id="{{t.hw_id}}enable" name="heating" data-role="slider">
-							<option value="off" {{ 'selected' if t.enabled }}>uit</option>
-							<option value="on" {{ 'selected' if t.enabled }}>aan</option>
-						</select></td>
 						<!-- heating indicator -->
 						<td><div id="{{t.hw_id}}indicator" class="heating-off"></div></td>
 						<!-- measured temperature -->

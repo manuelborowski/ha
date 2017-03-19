@@ -46,6 +46,7 @@ def Index(menuItem=None):
 	#page, per room, with an overview of the thermostats
 	else:
 		return render_template("base.html", uptime=GetUptime(), room=menuItem, 
+			status=cache.getRoomStatus(menuItem),
 			menuItems=_menuItems, thermostats=cache.getThermostatList(menuItem))
 
 
@@ -68,8 +69,26 @@ def _readSensor(thermostat):
 	#return jsonify(active='on' if active else 'off', enabled='on' if enabled else 'off', measured=measured, desired=desired)
 	t = cache.getThermostat(thermostat)
 	return jsonify(active='on' if t.active else 'off', \
-		enabled='on' if t.enabled else 'off', measured=t.measured, desired=t.desired, \
+		measured=t.measured, desired=t.desired, \
 		batLevel=t.batLevel)
+		
+		
+#get the status of a room
+@app.route("/_getroomstatus/<string:room>")    
+def _getroomstatus(room):
+	return jsonify(status='on' if cache.getRoomStatus(room) else 'off')
+		
+		
+
+#set the state of a room (enable or disable).  If enabled, the room will be heated else not
+@app.route("/_setroomstate/<string:room>")
+def _setroomstate(room):
+    state = request.args.get('state')
+    if state=="on":
+        cache.setRoomStatus(room, True)
+    else:
+        cache.setRoomStatus(room, False)
+    return ""
 	
 #set the state of a thermostat (enable or disable)
 @app.route("/_setstate/<string:thermostat>")
