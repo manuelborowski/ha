@@ -44,7 +44,7 @@ def _flushCache():
 		_flushHeatingScheduleCache()
 		db.session.commit()
 		_releaseLock()
-		_updateCache()
+		#_updateCache()
 
 	#every xx seconds, scan for dirty (changed) objects and commit them to the database.
 	#If no dirty objects then the database is not accessed.
@@ -91,7 +91,6 @@ _version = 1
 #Warning : MUST be executed inside _lock() ... _unlock()
 def _updateHeatingScheduleCache():
 	global _schedule
-	global _version
 	_schedule=[]
 	if config.SCHEDULE_TEST:
 		for i in range(0, 60*24*7, 10): #every 10 minutes
@@ -99,15 +98,17 @@ def _updateHeatingScheduleCache():
 	else:
 		sl = models.HeatingSchedule.query.order_by(models.HeatingSchedule.time).all()
 		for s in sl: _schedule.append(IdValDirty(s.id, s.time))
-	_version += 1
 			
 #Warning : MUST be executed inside _lock() ... _unlock()
 def _flushHeatingScheduleCache():
+	global _version
 	if config.SCHEDULE_TEST: return
 	for s in _schedule:
 		if s.dirty:
 			t = models.HeatingSchedule.query.filter(models.HeatingSchedule.id==s.id).first()
 			t.time = s.val
+			s.dirty = False
+	_version += 1
 
 def getHeatingScheduleList():
 	_getLock()
@@ -193,6 +194,7 @@ def _flushThermostatCache():
 		if t.dirty == True:
 			models.Thermostat.query.filter_by(hw_id=t.hw_id).first().desired = t.desired
 			models.Thermostat.query.filter_by(hw_id=t.hw_id).first().enabled = t.enabled
+			t.dirty = False
 
 def getThermostatList(roomName=None):
 	if roomName == None:
