@@ -46,13 +46,6 @@ span {font-weight: bold;}
 	});     
 
 	{% for t in thermostats %}
-		// enable or disable the thermostat
-		$(document).on("change", '#{{t.hw_id}}enable', function() 
-		{
-			var v = $('#{{t.hw_id}}enable').val();
-			$.getJSON('/_setstate/{{t.hw_id}}', {state: v});
-		});     
-
 		// thermostat range
 		$(document).on("change", '#{{t.hw_id}}range', function() 
 		{

@@ -3,23 +3,32 @@ import config
 config.DB_TOOLS = True
 from app import models, db
 
-_rooms = ['yannick', 'renee', 'badkamer']
+class Room:
+	def __init__(self, name, scheduled, thermal_mass, thermal_loss, floorheating_state):
+		self.name = name
+		self.scheduled = scheduled
+		self.thermal_mass = thermal_mass
+		self.thermal_loss = thermal_loss
+		self.floorheating_state = floorheating_state
+		
+_rooms = [Room('yannick', False, 500, 30, 'None'),
+			Room('renee', False, 500, 30, 'None'),
+			Room('badkamer', True, 500, 30, 'FORCE'),
+		]
 
 class Thermostat:
-	def __init__(self, name, hw_id, enabled, min, max, desired, scheduled, room_id):
+	def __init__(self, name, hw_id, min, max, desired, room_id):
 		self.name = name
 		self.hw_id = hw_id
-		self.enabled = enabled
 		self.min = min
 		self.max = max
 		self.desired = desired
-		self.scheduled = scheduled
 		self.room_id = room_id
 		
-_thermostats = [Thermostat('yannick', 'zw_yannick', True, 10, 30, 20, False, 'yannick'),
-				Thermostat('renee', 'zw_renee', True, 10, 30, 20, False, 'renee'),
-				Thermostat('badkamer_ra', 'w1_28-031685468eff', True, 10, 30, 20, False, 'badkamer'),
-				Thermostat('badkamer_vv', 'w1_28-0316855a42ff', True, 10, 30, 20, False, 'badkamer'),
+_thermostats = [Thermostat('yannick', 'zw_yannick', 10, 30, 20, 'yannick'),
+				Thermostat('renee', 'zw_renee', 10, 30, 20, 'renee'),
+				Thermostat('badkamer_ra', 'w1_28-031685468eff', 10, 30, 20, 'badkamer'),
+				Thermostat('badkamer_vv', 'w1_28-0316855a42ff', 10, 30, 20, 'badkamer'),
 				]
 
 _heatingschedule = [
@@ -62,21 +71,22 @@ _heatingschedule = [
 print('start db tools')
 
 
-def newRoom(name):
+def newRoom(r):
 	try:
-		r = models.Room(name=name)
+		r = models.Room(name=r.name, scheduled=r.scheduled, thermal_mass=r.thermal_mass, \
+						thermal_loss=r.thermal_loss, floorheating_state=r.floorheating_state)
 		db.session.add(r)
 		db.session.commit()
-		print('added room {}'.format(name))
+		print('added room {}'.format(r.name))
 	except Exception as e:
 		db.session.rollback()
 		#print(str(e))
-		print('newRoom : {} bestaat al'.format(name))
+		print('newRoom : {} bestaat al'.format(r.name))
 	
 def newThermostat(t):
 	try:
-		t = models.Thermostat(name=t.name, hw_id=t.hw_id, enabled=t.enabled, \
-								min=t.min, max=t.max, desired=t.desired, scheduled=t.scheduled)
+		t = models.Thermostat(name=t.name, hw_id=t.hw_id, \
+								min=t.min, max=t.max, desired=t.desired)
 		db.session.add(t)	
 		db.session.commit()
 		print('added thermostat {}'.format(t.name))

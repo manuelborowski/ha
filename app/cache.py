@@ -54,14 +54,39 @@ def _flushCache():
 
 #------------------rooms----------------------
 
+#non-priority : when the desired room temperature is reached, then the heating is switched off, 
+# even if the floorheating did not reach its desired value
+#priority : first the floorheating is enabled until the desired temperature is reached.  Then the
+# radiators are enabled until the desired room temperature is reached
+#force : the radiators and floorheating is reached.  The radiators are switched off when the 
+# desired room temperature is reached.  The floorheating is swithced off only when the desired
+# floorheating temperature is reached.
+class FHState:
+	NON_PRIORITY	= 'NON_PRIORITY'
+	PRIORITY		= 'PRIORITY'
+	FORCE			= 'FORCE'
+
+#off : the heating is off
+#priming : the room is heated so that it can reach the desired temperature(s).  See also here above
+#on : the room has reached its desired temperature and the temperature is sustained.
+class RState:
+	OFF				= 'OFF'
+	PRIMING			= 'PRIMING'
+	ON				= 'ON' 
+	
 class Room:
 	def __init__(self, dbRoom):
 		self.id = dbRoom.id
 		self.name = dbRoom.name
 		self.enabled = False
+		self.scheduled = dbRoom.scheduled
+		self.thermal_mass = dbRoom.thermal_mass
+		self.thermal_loss = dbRoom.thermal_loss
+		self.floorheating_state = dbRoom.floorheating_state
+		self.state = RState.OFF
 	
 	def __repr__(self):
-		return '<i/n/e %r/%r/%r>' % (self.id, self.name, self.enabled)	
+		return '<n/e/s %r/%r/%r>' % (self.id, self.name, self.enabled)	
 
 def _updateRoomCache():
 	rl = models.Room.query.all()
@@ -174,7 +199,6 @@ class Thermostat:
 	def __init__(self, dbThermostat):
 		self.id = dbThermostat.id
 		self.name = dbThermostat.name
-		self.enabled = dbThermostat.enabled
 		self.min = dbThermostat.min
 		self.max = dbThermostat.max
 		self.desired = dbThermostat.desired
@@ -183,12 +207,11 @@ class Thermostat:
 		self.dirty = False
 		self.active = False
 		self.measured = self.desired
-		self.scheduled = dbThermostat.scheduled
 		self.batLevel = -100
 
 	def __repr__(self):
-		return '<name[%r]/e[%r]/s[%r]/d[%r]/a[%r]/m[%r]>' % \
-			(self.name, self.enabled, self.desired, self.dirty, self.active, self.measured)	
+		return '<name[%r]/s[%r]/d[%r]/a[%r]/m[%r]>' % \
+			(self.name, self.desired, self.dirty, self.active, self.measured)	
 
 def _updateThermostatCache():			
 	tl = models.Thermostat.query.all()
@@ -199,7 +222,6 @@ def _flushThermostatCache():
 	for t in _thermostats.values():
 		if t.dirty == True:
 			models.Thermostat.query.filter_by(hw_id=t.hw_id).first().desired = t.desired
-			models.Thermostat.query.filter_by(hw_id=t.hw_id).first().enabled = t.enabled
 			t.dirty = False
 
 def getThermostatList(roomName=None):
@@ -213,15 +235,6 @@ def getThermostatList(roomName=None):
 				l.append(t)
 		_releaseLock()
 		return l
-
-
-def setThermostatEnabled(hw_id=None, enabled=False):
-	_getLock()
-	global _dirty
-	_thermostats[hw_id].enabled = enabled
-	_thermostats[hw_id].dirty = True
-	_dirty = True
-	_releaseLock()
 
 def setThermostatValue(hw_id=None, desired=0):
 	_getLock()

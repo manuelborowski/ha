@@ -22,6 +22,13 @@ def start():
 			log.info(owt.addThermometer(typeId[1]))
 		elif typeId[0] =='zw':	#zwave thermometer
 			log.info(zwave.addThermometer(typeId[1]))
+	#subscribe a number of rooms on a heating schedule state change
+	schedule.subscribeStateChange('eetkamer', stateChangeCb, 1)
+	schedule.subscribeStateChange('badkamer', stateChangeCb, 2)
+
+
+def stateChangeCb(room, dtime):
+	log.debug('State change for room/dtime : {}/{}'.format(room, dtime))
 
 	
 		
@@ -33,12 +40,12 @@ def worker():
 			# check the heating schedule.
 			if schedule.heatingGoesOn():
 				log.info('heating goes ON')
-				for t in tl:
-					if t.scheduled: t.enabled = True
+				#for t in tl:
+					#if t.scheduled: t.enabled = True
 			if schedule.heatingGoesOff():
 				log.info('heating goes OFF')
-				for t in tl:
-					t.enabled = False
+				#for t in tl:
+					#t.enabled = False
 			# update the thermometer readings
 			for t in tl:
 				typeId = t.hw_id.split("_")
@@ -55,10 +62,10 @@ def worker():
 					
 				#depending on the measured temperature, the desired temperature and the state
 				#of the thermometer (enabled or not), activate the heating.
-				if t.enabled: 
-					t.active = True if t.measured < t.desired else False
-				else:
-					t.active = False
+				#if t.enabled: 
+					#t.active = True if t.measured < t.desired else False
+				#else:
+					#t.active = False
 	#except Exception as e:
 		#exceptions at this level are forwarded (email) to the administrator
 	#	sendmail.send('Message from Heating Automation', str(e))

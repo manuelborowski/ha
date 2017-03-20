@@ -1,34 +1,23 @@
 import threading, time, logging, datetime
 import config
 from app import cache
-#from app import onewirethermo as owt
-#from app import zwave
-#from app import sendmail
-#from app import do
-
 
 log = logging.getLogger(__name__)
 
-
-def init():
-	log.info("initializing")
-
-def start():
-	log.info("starting")
-	wrk = threading.Thread(target=worker)
-	wrk.setDaemon(True)
-	wrk.start()
-
-def worker():
-	while True:
-		_checkSchedule()
-		time.sleep(config.SCHEDULE_DELAY)
-
-			
 class HeatingList:
+	class StateChangeCB:
+		def __init__(self, id, cb, dtime):
+			self.id = id
+			self.cb = cb
+			self.dtime = dtime
+			
+		def __repr__(self):
+			return '<i/dt : {}/{}>'.format(self.id, self.dtime)
+
 	def __init__(self):
 		self.crnt = 0
 		self.lst = []
+		self.cbDict = {}
 		
 	def _time2min(self, time):
 		#print('_time2min : {}/{}'.format(time, time.weekday() * 1440 + time.hour * 60 + time.minute))
@@ -51,12 +40,15 @@ class HeatingList:
 			if self.crnt < 0: self.crnt = last
 
 	def check(self):
+		minutes  = self._time2min(datetime.datetime.now())
 		if (self.crnt == len(self.lst) - 1) and (datetime.datetime.now().weekday() == 6):
+			#check the callbacks.  Adjust the 'next' time because of the wrap around...
+			self._checkCb(minutes, self.lst[0].val + 1440 * 7)
 			#sunday, after the last time entry : return if the current day is still sunday
 			return False
-		minutes  = self._time2min(datetime.datetime.now())
 		nxt = self.crnt + 1
 		if nxt == len(self.lst): nxt = 0 #wrap around
+		self._checkCb(minutes, self.lst[nxt].val)
 		if minutes >= self.lst[nxt].val: #passed a time entry, shift to next time entry
 			self.crnt = nxt
 			return True
@@ -66,13 +58,58 @@ class HeatingList:
 	def state(self):
 		return (self.crnt % 2) == 0
 		
+	def _checkCb(self, now, nxt):
+		log.debug('check callback : now/nxt : {}/{}'.format(now, nxt))
+		for cb in self.cbDict.values():
+			if now >= (nxt - cb.dtime): cb.cb(cb.id, cb.dtime)
+		
+	def addStateChangeCb(self, id, cb, dtime):
+		self.cbDict[id] = self.StateChangeCB(id, cb, dtime)
+		log.info('added statechange callback : {}'.format(self.cbDict[id]))
+		
 	def __repr__(self):
 		return '<crnt/lst : {}/{}>'.format(self.crnt, self.lst)
 		
-		
+
+
 _hsVersion = 0
 _hsList = HeatingList()
 
+def init():
+	log.info("initializing")
+	_updateHeatingList()
+
+def start():
+	log.info("starting")
+	wrk = threading.Thread(target=worker)
+	wrk.setDaemon(True)
+	wrk.start()
+
+def worker():
+	while True:
+		_checkSchedule()
+		time.sleep(config.SCHEDULE_DELAY)
+
+
+def subscribeStateChange(id, cb, dtime):
+	_hsList.addStateChangeCb(id, cb, dtime)
+			
+def state():
+	return _hsList.state()
+	
+def heatingGoesOn():
+	global _hsHeatingGoesOn
+	state = _hsHeatingGoesOn
+	_hsHeatingGoesOn = False
+	return state
+	
+def heatingGoesOff():
+	global _hsHeatingGoesOff
+	state = _hsHeatingGoesOff
+	_hsHeatingGoesOff = False
+	return state
+		
+		
 _hsHeatingGoesOn = False
 _hsHeatingGoesOff = False
 
@@ -94,21 +131,6 @@ def _checkSchedule():
 	return False
 
 	
-def state():
-	return _hsList.state()
-	
-def heatingGoesOn():
-	global _hsHeatingGoesOn
-	state = _hsHeatingGoesOn
-	_hsHeatingGoesOn = False
-	return state
-	
-def heatingGoesOff():
-	global _hsHeatingGoesOff
-	state = _hsHeatingGoesOff
-	_hsHeatingGoesOff = False
-	return state
-		
 def _updateHeatingList():
 	global _hsList
 	global _hsVersion

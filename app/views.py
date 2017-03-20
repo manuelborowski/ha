@@ -90,18 +90,6 @@ def _setroomstate(room):
         cache.setRoomStatus(room, False)
     return ""
 	
-#set the state of a thermostat (enable or disable)
-@app.route("/_setstate/<string:thermostat>")
-def _setState(thermostat):
-    state = request.args.get('state')
-    if state=="on":
-        Pins.LEDon()
-        cache.setThermostatEnabled(thermostat, True)
-    else:
-        Pins.LEDoff()
-        cache.setThermostatEnabled(thermostat, False)
-    return ""
-
 #set the temperature
 @app.route("/_settemperature/<string:thermostat>")
 def _setTemperature(thermostat):

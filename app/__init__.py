@@ -7,6 +7,8 @@ if not config.MODULE_TEST:
 	app.config.from_object('config')
 	db = SQLAlchemy(app)
 
+	from app import models
+	
 	if not config.DB_TOOLS:
 		from app import Pins
 		from app import views, models, cache, core, onewirethermo, zwave, history, do, schedule
