@@ -6,13 +6,15 @@ log = logging.getLogger(__name__)
 
 class HeatingList:
 	class StateChangeCB:
-		def __init__(self, id, cb, dtime):
+		def __init__(self, id, cb, dtime, level):
 			self.id = id
 			self.cb = cb
 			self.dtime = dtime
+			self.level = level
+			self.active = True
 			
 		def __repr__(self):
-			return '<i/dt : {}/{}>'.format(self.id, self.dtime)
+			return '<i/dt/s/a : {}/{}/{}/{}>'.format(self.id, self.dtime, self.level, self.active)
 
 	def __init__(self):
 		self.crnt = 0
@@ -51,6 +53,7 @@ class HeatingList:
 		self._checkCb(minutes, self.lst[nxt].val)
 		if minutes >= self.lst[nxt].val: #passed a time entry, shift to next time entry
 			self.crnt = nxt
+			self._resetCb()
 			return True
 		else:
 			return False
@@ -59,12 +62,19 @@ class HeatingList:
 		return (self.crnt % 2) == 0
 		
 	def _checkCb(self, now, nxt):
-		log.debug('check callback : now/nxt : {}/{}'.format(now, nxt))
+		#log.debug('check callback : now/nxt : {}/{}'.format(now, nxt))
 		for cb in self.cbDict.values():
-			if now >= (nxt - cb.dtime): cb.cb(cb.id, cb.dtime)
+			if cb.active and now >= (nxt - cb.dtime) and self.state() != cb.level:
+				cb.active = False
+				cb.cb(cb.id, cb.dtime, cb.level)
+	def _resetCb(self):
+		log.debug('reset callback')
+		for cb in self.cbDict.values():
+			if not cb.active and self.state() != cb.level:
+				cb.active = True
 		
-	def addStateChangeCb(self, id, cb, dtime):
-		self.cbDict[id] = self.StateChangeCB(id, cb, dtime)
+	def addStateChangeCb(self, id, cb, dtime, level):
+		self.cbDict[id] = self.StateChangeCB(id, cb, dtime, level)
 		log.info('added statechange callback : {}'.format(self.cbDict[id]))
 		
 	def __repr__(self):
@@ -86,13 +96,14 @@ def start():
 	wrk.start()
 
 def worker():
+	time.sleep(62 - datetime.datetime.now().second)
 	while True:
 		_checkSchedule()
 		time.sleep(config.SCHEDULE_DELAY)
 
 
-def subscribeStateChange(id, cb, dtime):
-	_hsList.addStateChangeCb(id, cb, dtime)
+def subscribeHeatingChange(id, cb, dtime, level):
+	_hsList.addStateChangeCb(id, cb, dtime, level)
 			
 def state():
 	return _hsList.state()
