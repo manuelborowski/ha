@@ -23,10 +23,10 @@ def start():
 		elif typeId[0] =='zw':	#zwave thermometer
 			log.info(zwave.addThermometer(typeId[1]))
 	#subscribe a number of rooms on a heating schedule state change
-	schedule.subscribeHeatingChange('eetkamerH', stateChangeCb, 1, True)
-	schedule.subscribeHeatingChange('badkamerH', stateChangeCb, 2, True)
-	schedule.subscribeHeatingChange('eetkamerL', stateChangeCb, 0, False)
-	schedule.subscribeHeatingChange('badkamerL', stateChangeCb, 0, False)
+	schedule.subscribeHeatingChange('eetkamer/H', stateChangeCb, 1, True)
+	schedule.subscribeHeatingChange('badkamer/H', stateChangeCb, 2, True)
+	schedule.subscribeHeatingChange('eetkamer/L', stateChangeCb, 0, False)
+	schedule.subscribeHeatingChange('badkamer/L', stateChangeCb, 0, False)
 
 
 def stateChangeCb(room, dtime, level):

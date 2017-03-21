@@ -4,31 +4,32 @@ config.DB_TOOLS = True
 from app import models, db
 
 class Room:
-	def __init__(self, name, scheduled, thermal_mass, thermal_loss, floorheating_state):
+	def __init__(self, name, scheduled, thermal_mass, thermal_loss, floorheating_mode):
 		self.name = name
 		self.scheduled = scheduled
 		self.thermal_mass = thermal_mass
 		self.thermal_loss = thermal_loss
-		self.floorheating_state = floorheating_state
+		self.floorheating_mode = floorheating_mode
 		
-_rooms = [Room('yannick', False, 500, 30, 'None'),
-			Room('renee', False, 500, 30, 'None'),
+_rooms = [Room('yannick', False, 500, 30, 'NON_PRIORITY'),
+			Room('renee', False, 500, 30, 'PRIORITY'),
 			Room('badkamer', True, 500, 30, 'FORCE'),
 		]
 
 class Thermostat:
-	def __init__(self, name, hw_id, min, max, desired, room_id):
+	def __init__(self, name, hw_id, min, max, desired, type, room_id):
 		self.name = name
 		self.hw_id = hw_id
 		self.min = min
 		self.max = max
 		self.desired = desired
+		self.type = type
 		self.room_id = room_id
 		
-_thermostats = [Thermostat('yannick', 'zw_yannick', 10, 30, 20, 'yannick'),
-				Thermostat('renee', 'zw_renee', 10, 30, 20, 'renee'),
-				Thermostat('badkamer_ra', 'w1_28-031685468eff', 10, 30, 20, 'badkamer'),
-				Thermostat('badkamer_vv', 'w1_28-0316855a42ff', 10, 30, 20, 'badkamer'),
+_thermostats = [Thermostat('yannick', 'zw_yannick', 10, 30, 20, 'RADIATOR', 'yannick'),
+				Thermostat('renee', 'zw_renee', 10, 30, 20, 'RADIATOR', 'renee'),
+				Thermostat('badkamer_ra', 'w1_28-031685468eff', 10, 30, 20, 'RADIATOR', 'badkamer'),
+				Thermostat('badkamer_vv', 'w1_28-0316855a42ff', 10, 30, 20, 'FLOOR', 'badkamer'),
 				]
 
 _heatingschedule = [
@@ -74,7 +75,7 @@ print('start db tools')
 def newRoom(r):
 	try:
 		r = models.Room(name=r.name, scheduled=r.scheduled, thermal_mass=r.thermal_mass, \
-						thermal_loss=r.thermal_loss, floorheating_state=r.floorheating_state)
+						thermal_loss=r.thermal_loss, floorheating_mode=r.floorheating_mode)
 		db.session.add(r)
 		db.session.commit()
 		print('added room {}'.format(r.name))
@@ -86,7 +87,7 @@ def newRoom(r):
 def newThermostat(t):
 	try:
 		t = models.Thermostat(name=t.name, hw_id=t.hw_id, \
-								min=t.min, max=t.max, desired=t.desired)
+								min=t.min, max=t.max, desired=t.desired, type=t.type)
 		db.session.add(t)	
 		db.session.commit()
 		print('added thermostat {}'.format(t.name))

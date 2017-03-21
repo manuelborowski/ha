@@ -61,7 +61,7 @@ def _flushCache():
 #force : the radiators and floorheating is reached.  The radiators are switched off when the 
 # desired room temperature is reached.  The floorheating is swithced off only when the desired
 # floorheating temperature is reached.
-class FHState:
+class FHmode:
 	NON_PRIORITY	= 'NON_PRIORITY'
 	PRIORITY		= 'PRIORITY'
 	FORCE			= 'FORCE'
@@ -69,7 +69,7 @@ class FHState:
 #off : the heating is off
 #priming : the room is heated so that it can reach the desired temperature(s).  See also here above
 #on : the room has reached its desired temperature and the temperature is sustained.
-class RState:
+class HeatingState:
 	OFF				= 'OFF'
 	PRIMING			= 'PRIMING'
 	ON				= 'ON' 
@@ -82,8 +82,8 @@ class Room:
 		self.scheduled = dbRoom.scheduled
 		self.thermal_mass = dbRoom.thermal_mass
 		self.thermal_loss = dbRoom.thermal_loss
-		self.floorheating_state = dbRoom.floorheating_state
-		self.state = RState.OFF
+		self.floorheating_mode = dbRoom.floorheating_mode
+		self.state = HeatingState.OFF
 	
 	def __repr__(self):
 		return '<n/e/s %r/%r/%r>' % (self.id, self.name, self.enabled)	
