@@ -30,8 +30,8 @@ def init():
 
 def _updateCache():
 	_getLock()
-	_updateRoomCache()
 	_updateThermostatCache()
+	_updateRoomCache()
 	_updateHeatingScheduleCache()
 	_releaseLock()
 
@@ -74,6 +74,10 @@ class HeatingState:
 	PRIMING			= 'PRIMING'
 	ON				= 'ON' 
 	
+class ThermostatType:
+	RADIATOR		= 'RADIATOR'
+	FLOOR			= 'FLOOR'
+	
 class Room:
 	def __init__(self, dbRoom):
 		self.id = dbRoom.id
@@ -84,14 +88,27 @@ class Room:
 		self.thermal_loss = dbRoom.thermal_loss
 		self.floorheating_mode = dbRoom.floorheating_mode
 		self.state = HeatingState.OFF
+		self.floorThermostat = []
+		for t in dbRoom.thermostats:
+			if t.type == ThermostatType.RADIATOR:
+				self.radiatorThermostat = getThermostat(t.hw_id)
+			else:
+				self.floorThermostat.append(getThermostat(t.hw_id))
 	
 	def __repr__(self):
-		return '<n/e/s %r/%r/%r>' % (self.id, self.name, self.enabled)	
+		line = '<room : n/e/s/tm/tl/fm/st : {}/{}/{}/{}/{}/{}/{}>'.format(self.name, \
+			self.enabled, self.scheduled, self.thermal_mass, self.thermal_loss, \
+			self.floorheating_mode, self.state)
+		line += '\nradiator thermostat : {}'.format(self.radiatorThermostat)
+		for t in self.floorThermostat:
+			line += '\nfloor thermostat : {}'.format(t)
+		return line
 
 def _updateRoomCache():
 	rl = models.Room.query.all()
 	for r in rl:
 		_rooms[r.name] = Room(r)
+		log.debug(_rooms[r.name])
 		
 def getRoomList():
 	return sorted(list(_rooms.values()), key=lambda room: room.name)
@@ -210,7 +227,7 @@ class Thermostat:
 		self.batLevel = -100
 
 	def __repr__(self):
-		return '<name[%r]/s[%r]/d[%r]/a[%r]/m[%r]>' % \
+		return '<name[%r]/d[%r]/ds[%r]/a[%r]/m[%r]>' % \
 			(self.name, self.desired, self.dirty, self.active, self.measured)	
 
 def _updateThermostatCache():			

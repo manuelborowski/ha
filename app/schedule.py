@@ -152,5 +152,5 @@ def _updateHeatingList():
 		#for t in hs.timeList:
 			#_hsList.append(t)
 	_hsList.init()
-	log.debug('Heating list update : {}/{}'.format(_hsVersion, _hsList))
+	#log.debug('Heating list update : {}/{}'.format(_hsVersion, _hsList))
 	
